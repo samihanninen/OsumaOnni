@@ -1,10 +1,312 @@
 <script setup lang="ts">
-// Toteutus tulee myöhemmässä vaiheessa.
+import { computed, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useKisaStore } from '@/stores/kisa'
+import { LAJI_KOODIT, LUOKAT, LUOKKA_NIMET } from '@/core/lajit'
+import type { IkaSarja, Laji, Luokka } from '@/types/kisa'
+
+const store = useKisaStore()
+const { kisa, yhdistysEhdotukset } = storeToRefs(store)
+
+const IKASARJAT: IkaSarja[] = ['H', 'H50']
+
+const uusi = ref({ etunimi: '', sukunimi: '', yhdistys: '', ikasarja: 'H' as IkaSarja })
+const virhe = ref('')
+const poistoVahvistus = ref<string | null>(null)
+
+const kilpailijat = computed(() =>
+  [...kisa.value.kilpailijat].sort(
+    (a, b) =>
+      a.sukunimi.localeCompare(b.sukunimi, 'fi') || a.etunimi.localeCompare(b.etunimi, 'fi'),
+  ),
+)
+
+function lisaa() {
+  const sukunimi = uusi.value.sukunimi.trim()
+  if (!sukunimi) {
+    virhe.value = 'Sukunimi on pakollinen — sitä tarvitaan tasatulosten järjestämiseen.'
+    return
+  }
+  virhe.value = ''
+  store.lisaaKilpailija({ ...uusi.value, sukunimi })
+  // Yhdistys ja ikäsarja jäävät, koska peräkkäiset kilpailijat ovat usein samasta seurasta.
+  uusi.value.etunimi = ''
+  uusi.value.sukunimi = ''
+  document.getElementById('etunimi')?.focus()
+}
+
+function osallistuu(id: string, laji: Laji): boolean {
+  return Boolean(store.kilpailija(id)?.osallistumiset[laji])
+}
+
+function vaihdaOsallistuminen(id: string, laji: Laji, mukana: boolean) {
+  if (mukana) store.lisaaOsallistuminen(id, laji)
+  else store.poistaOsallistuminen(id, laji)
+}
+
+function luokka(id: string, laji: Laji): Luokka | '' {
+  return store.kilpailija(id)?.osallistumiset[laji]?.luokka ?? ''
+}
+
+function poista(id: string) {
+  store.poistaKilpailija(id)
+  poistoVahvistus.value = null
+}
 </script>
 
 <template>
   <section class="sivu">
     <h1>Kilpailijat</h1>
-    <p class="tulossa">Tämä näkymä ei ole vielä toteutettu.</p>
+    <p>
+      Kirjaa nimi ja yhdistys kertaalleen, ja valitse lajit joihin kilpailija osallistuu.
+      Aseluokka valitaan lajikohtaisesti, koska se seuraa käytettyä asetta.
+    </p>
+
+    <form class="kortti lisays" @submit.prevent="lisaa">
+      <div class="kentat-rinnakkain">
+        <div class="kentta">
+          <label for="etunimi">Etunimi</label>
+          <input id="etunimi" v-model="uusi.etunimi" type="text" autocomplete="off" />
+        </div>
+        <div class="kentta">
+          <label for="sukunimi">Sukunimi</label>
+          <input id="sukunimi" v-model="uusi.sukunimi" type="text" autocomplete="off" required />
+        </div>
+        <div class="kentta">
+          <label for="yhdistys">Yhdistys / ryhmä</label>
+          <input
+            id="yhdistys"
+            v-model="uusi.yhdistys"
+            type="text"
+            list="yhdistyslista"
+            autocomplete="off"
+          />
+          <datalist id="yhdistyslista">
+            <option v-for="y in yhdistysEhdotukset" :key="y" :value="y"></option>
+          </datalist>
+          <span class="vihje">Valitse listalta, niin kirjoitusasu pysyy samana.</span>
+        </div>
+        <div class="kentta">
+          <label for="ikasarja">Ikäsarja</label>
+          <select id="ikasarja" v-model="uusi.ikasarja">
+            <option v-for="s in IKASARJAT" :key="s" :value="s">{{ s }}</option>
+          </select>
+        </div>
+      </div>
+
+      <p v-if="virhe" class="huomio huomio--virhe">{{ virhe }}</p>
+
+      <button type="submit" class="nappi nappi--ensisijainen">Lisää kilpailija</button>
+    </form>
+
+    <p v-if="kilpailijat.length === 0" class="tulossa">
+      Ei vielä kilpailijoita. Lisää ensimmäinen yllä olevalla lomakkeella.
+    </p>
+
+    <template v-else>
+      <h2 class="lkm">{{ kilpailijat.length }} kilpailijaa</h2>
+
+      <ul class="lista">
+        <li v-for="k in kilpailijat" :key="k.id" class="kortti rivi">
+          <div class="rivi-yla">
+            <div class="kentat-rinnakkain nimet">
+              <div class="kentta">
+                <label :for="`etu-${k.id}`">Etunimi</label>
+                <input
+                  :id="`etu-${k.id}`"
+                  type="text"
+                  :value="k.etunimi"
+                  @input="
+                    store.paivitaKilpailija(k.id, {
+                      etunimi: ($event.target as HTMLInputElement).value,
+                    })
+                  "
+                />
+              </div>
+              <div class="kentta">
+                <label :for="`suku-${k.id}`">Sukunimi</label>
+                <input
+                  :id="`suku-${k.id}`"
+                  type="text"
+                  :value="k.sukunimi"
+                  @input="
+                    store.paivitaKilpailija(k.id, {
+                      sukunimi: ($event.target as HTMLInputElement).value,
+                    })
+                  "
+                />
+              </div>
+              <div class="kentta">
+                <label :for="`yhd-${k.id}`">Yhdistys</label>
+                <input
+                  :id="`yhd-${k.id}`"
+                  type="text"
+                  list="yhdistyslista"
+                  :value="k.yhdistys"
+                  @input="
+                    store.paivitaKilpailija(k.id, {
+                      yhdistys: ($event.target as HTMLInputElement).value,
+                    })
+                  "
+                />
+              </div>
+              <div class="kentta">
+                <label :for="`ika-${k.id}`">Ikäsarja</label>
+                <select
+                  :id="`ika-${k.id}`"
+                  :value="k.ikasarja"
+                  @change="
+                    store.paivitaKilpailija(k.id, {
+                      ikasarja: ($event.target as HTMLSelectElement).value as IkaSarja,
+                    })
+                  "
+                >
+                  <option v-for="s in IKASARJAT" :key="s" :value="s">{{ s }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <fieldset class="lajit">
+            <legend>Lajit ja aseluokat</legend>
+            <div class="lajilista">
+              <div v-for="laji in LAJI_KOODIT" :key="laji" class="laji">
+                <label class="valinta">
+                  <input
+                    type="checkbox"
+                    :checked="osallistuu(k.id, laji)"
+                    @change="
+                      vaihdaOsallistuminen(
+                        k.id,
+                        laji,
+                        ($event.target as HTMLInputElement).checked,
+                      )
+                    "
+                  />
+                  <span>{{ laji }}</span>
+                </label>
+                <select
+                  v-if="osallistuu(k.id, laji)"
+                  :aria-label="`${laji}: aseluokka`"
+                  :value="luokka(k.id, laji)"
+                  @change="
+                    store.asetaLuokka(
+                      k.id,
+                      laji,
+                      ($event.target as HTMLSelectElement).value as Luokka,
+                    )
+                  "
+                >
+                  <option v-for="l in LUOKAT" :key="l" :value="l">{{ LUOKKA_NIMET[l] }}</option>
+                </select>
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="rivi-ala">
+            <button
+              v-if="poistoVahvistus !== k.id"
+              type="button"
+              class="nappi poista"
+              @click="poistoVahvistus = k.id"
+            >
+              Poista
+            </button>
+            <template v-else>
+              <span class="varmistus">Poistetaanko myös kirjatut tulokset?</span>
+              <button type="button" class="nappi poista-varma" @click="poista(k.id)">
+                Kyllä, poista
+              </button>
+              <button type="button" class="nappi" @click="poistoVahvistus = null">Peruuta</button>
+            </template>
+          </div>
+        </li>
+      </ul>
+    </template>
   </section>
 </template>
+
+<style scoped>
+.lisays {
+  margin: 1rem 0 1.5rem;
+}
+.lkm {
+  font-size: 1rem;
+  color: var(--vari-teksti-himmea);
+  margin: 1.25rem 0 0.5rem;
+}
+.lista {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+.rivi {
+  padding: 0.85rem 1rem 0.6rem;
+}
+.nimet .kentta {
+  margin-bottom: 0.6rem;
+}
+@media (min-width: 900px) {
+  .nimet {
+    grid-template-columns: 1fr 1fr 1fr 6rem;
+  }
+}
+
+.lajit {
+  margin: 0.35rem 0 0.6rem;
+  padding: 0.6rem 0.85rem 0.35rem;
+}
+.lajilista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+}
+.laji {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.laji select {
+  width: auto;
+  min-height: 36px;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.9rem;
+}
+.valinta {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  /* Riittävän iso kosketuskohde */
+  min-height: 44px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.valinta input {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.rivi-ala {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border-top: 1px solid var(--vari-reuna);
+  padding-top: 0.5rem;
+}
+.poista,
+.poista-varma {
+  min-height: 38px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.9rem;
+}
+.poista-varma {
+  border-color: var(--vari-virhe);
+  color: var(--vari-virhe);
+}
+.varmistus {
+  font-size: 0.9rem;
+  color: var(--vari-virhe);
+}
+</style>

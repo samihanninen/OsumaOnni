@@ -1,10 +1,201 @@
 <script setup lang="ts">
-// Toteutus tulee myöhemmässä vaiheessa.
+import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useKisaStore } from '@/stores/kisa'
+import { LAJI_KOODIT, laukauksiaYhteensa, suurinTulos } from '@/core/lajit'
+import type { Laji, TulosSaanto } from '@/types/kisa'
+
+const store = useKisaStore()
+const { kisa } = storeToRefs(store)
+
+const tiedot = computed(() => kisa.value.kisatiedot)
+const asetukset = computed(() => kisa.value.asetukset)
+
+const tulosSaannot: { arvo: TulosSaanto; nimi: string }[] = [
+  { arvo: 'paras', nimi: 'Parempi sarja huomioidaan' },
+  { arvo: 'summa', nimi: 'Sarjojen summa' },
+]
+
+function paivitaRakenne(laji: Laji, kentta: 'kilpasarjoja' | 'laukauksiaSarjassa', arvo: string) {
+  const luku = Math.max(1, Math.trunc(Number(arvo) || 1))
+  store.asetaLajiMaaritys(laji, { [kentta]: luku })
+}
+
+function paivitaSaanto(laji: Laji, arvo: string) {
+  store.asetaLajiMaaritys(laji, { tulosSaanto: arvo as TulosSaanto })
+}
 </script>
 
 <template>
   <section class="sivu">
     <h1>Kisatiedot</h1>
-    <p class="tulossa">Tämä näkymä ei ole vielä toteutettu.</p>
+    <p>Täytä kisan perustiedot. Ne eivät vaikuta laskentaan, vaan näkyvät tuloslistoissa.</p>
+
+    <fieldset>
+      <legend>Kisan perustiedot</legend>
+      <div class="kentat-rinnakkain">
+        <div class="kentta">
+          <label for="nimi">Kisan nimi</label>
+          <input id="nimi" v-model="tiedot.nimi" type="text" autocomplete="off" />
+        </div>
+        <div class="kentta">
+          <label for="jarjestaja">Järjestäjä / seura</label>
+          <input id="jarjestaja" v-model="tiedot.jarjestaja" type="text" autocomplete="off" />
+        </div>
+        <div class="kentta">
+          <label for="paikka">Kilpailupaikka</label>
+          <input id="paikka" v-model="tiedot.paikka" type="text" autocomplete="off" />
+        </div>
+        <div class="kentta">
+          <label for="pvm">Päivämäärä</label>
+          <input id="pvm" v-model="tiedot.pvm" type="text" placeholder="esim. 15.6.2026" />
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Vastuuhenkilöt</legend>
+      <div class="kentat-rinnakkain">
+        <div class="kentta">
+          <label for="johtaja">Kilpailunjohtaja</label>
+          <input id="johtaja" v-model="tiedot.kilpailunjohtaja" type="text" autocomplete="off" />
+        </div>
+        <div class="kentta">
+          <label for="tuomari">Tuomari / jury</label>
+          <input id="tuomari" v-model="tiedot.tuomari" type="text" autocomplete="off" />
+        </div>
+        <div class="kentta">
+          <label for="kirjuri">Kirjuri / sihteeri</label>
+          <input id="kirjuri" v-model="tiedot.kirjuri" type="text" autocomplete="off" />
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Yhdistyskilpailu</legend>
+      <div class="kentta parhaat">
+        <label for="parhaat">Laskettavien parhaiden määrä</label>
+        <input
+          id="parhaat"
+          type="number"
+          min="1"
+          max="20"
+          :value="asetukset.laskettavatParhaat"
+          @input="store.asetaLaskettavatParhaat(Number(($event.target as HTMLInputElement).value))"
+        />
+        <span class="vihje">Sääntöjen mukaan joukkueen koko on 3 ampujaa, joten oletus on 3.</span>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Lajien rakenne</legend>
+      <p class="vihje rakenne-vihje">
+        Oletukset ovat RESUL:n sääntöjen mukaiset (versiot 1.6 / 2025). Muokkaa vain, jos säännöt
+        ovat muuttuneet. Sarjojen tai laukausten vähentäminen poistaa jo kirjattuja laukauksia.
+      </p>
+
+      <div class="taulukko-kehys">
+        <table>
+          <thead>
+            <tr>
+              <th>Laji</th>
+              <th class="numero">Kilpasarjoja</th>
+              <th class="numero">Laukauksia / sarja</th>
+              <th>Tulos</th>
+              <th class="numero">Yhteensä</th>
+              <th class="numero">Maksimi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="laji in LAJI_KOODIT" :key="laji">
+              <th scope="row">{{ laji }}</th>
+              <td class="numero">
+                <input
+                  class="pieni"
+                  type="number"
+                  min="1"
+                  max="10"
+                  :aria-label="`${laji}: kilpasarjojen määrä`"
+                  :value="asetukset.lajiMaaritykset[laji].kilpasarjoja"
+                  @change="
+                    paivitaRakenne(laji, 'kilpasarjoja', ($event.target as HTMLInputElement).value)
+                  "
+                />
+              </td>
+              <td class="numero">
+                <input
+                  class="pieni"
+                  type="number"
+                  min="1"
+                  max="60"
+                  :aria-label="`${laji}: laukauksia sarjassa`"
+                  :value="asetukset.lajiMaaritykset[laji].laukauksiaSarjassa"
+                  @change="
+                    paivitaRakenne(
+                      laji,
+                      'laukauksiaSarjassa',
+                      ($event.target as HTMLInputElement).value,
+                    )
+                  "
+                />
+              </td>
+              <td>
+                <select
+                  :aria-label="`${laji}: tulossääntö`"
+                  :value="asetukset.lajiMaaritykset[laji].tulosSaanto"
+                  @change="paivitaSaanto(laji, ($event.target as HTMLSelectElement).value)"
+                >
+                  <option v-for="s in tulosSaannot" :key="s.arvo" :value="s.arvo">
+                    {{ s.nimi }}
+                  </option>
+                </select>
+              </td>
+              <td class="numero">{{ laukauksiaYhteensa(asetukset.lajiMaaritykset[laji]) }} ls</td>
+              <td class="numero">{{ suurinTulos(asetukset.lajiMaaritykset[laji]) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="palautus">
+        <button type="button" class="nappi" @click="store.palautaOletusRakenteet()">
+          Palauta sääntöjen mukaiset oletukset
+        </button>
+      </p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Muistiinpanot</legend>
+      <div class="kentta">
+        <label for="muistiinpanot" class="piilotettu">Muistiinpanot</label>
+        <textarea id="muistiinpanot" v-model="tiedot.muistiinpanot"></textarea>
+      </div>
+    </fieldset>
   </section>
 </template>
+
+<style scoped>
+.parhaat {
+  max-width: 20rem;
+}
+.rakenne-vihje {
+  margin-bottom: 0.85rem;
+}
+.pieni {
+  width: 5.5rem;
+  text-align: right;
+}
+.palautus {
+  margin: 0.85rem 0;
+}
+.piilotettu {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+td select {
+  min-width: 13rem;
+}
+</style>
