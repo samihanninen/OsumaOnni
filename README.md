@@ -3,10 +3,11 @@
 Selaimessa toimiva tuloskortti- ja tuloslaskentasovellus reserviläisammuntaan.
 Kaikki tiedot pysyvät **vain omalla laitteellasi** — sovelluksessa ei ole taustapalvelinta.
 
-**Sovellus:** https://samihanninen.github.io/OsumaOnni/
+**➡️ Sovellus: https://samihanninen.github.io/OsumaOnni/**
 
-> 🚧 **Kehitysvaiheessa.** Sovellus on rakentamisen alla eikä yllä oleva osoite ole
-> vielä toiminnassa. Tämä README kuvaa valmista toteutusta.
+> 🚧 **Kehitys jatkuu.** Sovellus on käytettävissä, mutta usean kirjaajan tulosten
+> yhdistäminen (linkki, QR-koodi ja tiedosto) on vielä työn alla. Muut toiminnot ovat
+> valmiita ja testattuja.
 
 Sovellus on selainversio Nummi-Pusulan Reserviläiset ry:n Excel-tuloskortista.
 Excel-versio vaatii Excel 2021:n tai Microsoft 365:n (`SORTBY`, `FILTER`, `SEQUENCE`),
