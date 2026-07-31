@@ -6,6 +6,7 @@ import { useKisaStore } from '@/stores/kisa'
 import { useLaiteStore } from '@/stores/laite'
 import { useTyopoyta } from '@/composables/useMediaKysely'
 import { LAJI_KOODIT, onLaji } from '@/core/lajit'
+import { laskeLaji } from '@/core/laskenta'
 import type { Laji, Laukaus, Luokka } from '@/types/kisa'
 import LaukausNappaimisto from '@/components/LaukausNappaimisto.vue'
 import KilpailijaKortti from '@/components/KilpailijaKortti.vue'
@@ -127,6 +128,27 @@ function vaihdaKilpailija(suunta: 1 | -1) {
   siirryEnsimmaiseenTyhjaan()
 }
 
+/** Siirtyy suoraan haluttuun kilpailijaan valitsimesta. */
+function siirryKilpailijaan(indeksi: number) {
+  if (indeksi < 0 || indeksi >= osallistujat.value.length) return
+  kohdistus.value = indeksi
+  siirryEnsimmaiseenTyhjaan()
+}
+
+/** Lyhyt tilatieto valitsimeen: valmis, kesken vai tyhjä. */
+function tila(k: (typeof osallistujat.value)[number]): string {
+  const o = k.osallistumiset[laji.value]
+  if (!o) return '—'
+  const tulos = laskeLaji(laji.value, maaritys.value, o)
+  if (tulos.valmis) return `valmis ${tulos.pisteet}`
+  if (tulos.aloitettu) {
+    const syotetty = tulos.sarjat.reduce((s, x) => s + x.syotetty, 0)
+    const kaikki = maaritys.value.kilpasarjoja * maaritys.value.laukauksiaSarjassa
+    return `${syotetty}/${kaikki}`
+  }
+  return 'tyhjä'
+}
+
 // ---------- Taulukkosyötön käsittelijät ----------
 
 function taulukkoSyota(id: string, sarja: number, laukaus: number, arvo: Laukaus) {
@@ -227,7 +249,23 @@ function taulukkoHylatty(id: string, hylatty: boolean) {
 
       <!-- Kosketussyöttö: laitteen omaa näppäimistöä ei avata lainkaan -->
       <template v-else-if="nykyinen">
-        <p class="laskuri">Kilpailija {{ kohdistus + 1 }} / {{ osallistujat.length }}</p>
+        <!--
+          Suora siirtyminen kilpailijaan. Virheen korjaaminen jälkikäteen olisi muuten
+          kymmenien napautusten päässä, jos kirjaaja on jo edennyt listalla eteenpäin.
+        -->
+        <div class="valitsin">
+          <label class="valitsin-label" for="kilpailijavalinta">Kilpailija</label>
+          <select
+            id="kilpailijavalinta"
+            :value="kohdistus"
+            @change="siirryKilpailijaan(Number(($event.target as HTMLSelectElement).value))"
+          >
+            <option v-for="(k, i) in osallistujat" :key="k.id" :value="i">
+              {{ i + 1 }}. {{ k.sukunimi }}, {{ k.etunimi }} — {{ tila(k) }}
+            </option>
+          </select>
+          <span class="laskuri">{{ kohdistus + 1 }} / {{ osallistujat.length }}</span>
+        </div>
 
         <KilpailijaKortti
           :kilpailija="nykyinen"
@@ -379,10 +417,28 @@ function taulukkoHylatty(id: string, hylatty: boolean) {
   font-weight: 700;
 }
 
-.laskuri {
-  font-size: 0.85rem;
+.valitsin {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+.valitsin-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--vari-teksti-himmea);
-  margin-bottom: 0.4rem;
+  flex: 0 0 auto;
+}
+.valitsin select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.laskuri {
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--vari-teksti-himmea);
 }
 .nappaimisto-alue {
   margin: 0.85rem 0;

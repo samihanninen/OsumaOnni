@@ -131,12 +131,59 @@ describe('SyottoView — kosketusnäppäimistö', () => {
     const wrapper = await asenna()
     // Sukunimen mukaan Ahonen on ensimmäinen.
     expect(wrapper.text()).toContain('Aada Ahonen')
-    expect(wrapper.text()).toContain('Kilpailija 1 / 2')
+    expect(wrapper.get('.laskuri').text()).toBe('1 / 2')
 
     const seuraava = wrapper.findAll('.nappain').find((n) => n.text().includes('Seuraava'))!
     await seuraava.trigger('click')
     expect(wrapper.text()).toContain('Sami Hänninen')
-    expect(wrapper.text()).toContain('Kilpailija 2 / 2')
+    expect(wrapper.get('.laskuri').text()).toBe('2 / 2')
+  })
+
+  it('valitsimesta voi hypätä suoraan kilpailijaan', async () => {
+    const toinen = store.lisaaKilpailija({ etunimi: 'Aada', sukunimi: 'Ahonen', yhdistys: 'KaRes' })
+    store.lisaaOsallistuminen(toinen.id, 'RA1')
+    const kolmas = store.lisaaKilpailija({ etunimi: 'Cecil', sukunimi: 'Cronberg', yhdistys: 'X' })
+    store.lisaaOsallistuminen(kolmas.id, 'RA1')
+
+    const wrapper = await asenna()
+    expect(wrapper.text()).toContain('Aada Ahonen')
+
+    // Kolmanteen suoraan, ilman kahta erillistä "Seuraava"-napautusta.
+    // Aakkosjärjestys: Ahonen (0), Cronberg (1), Hänninen (2).
+    await wrapper.get('#kilpailijavalinta').setValue('2')
+    expect(wrapper.text()).toContain('Sami Hänninen')
+    expect(wrapper.get('.laskuri').text()).toBe('3 / 3')
+
+    await wrapper.get('#kilpailijavalinta').setValue('1')
+    expect(wrapper.text()).toContain('Cecil Cronberg')
+    expect(wrapper.get('.laskuri').text()).toBe('2 / 3')
+  })
+
+  it('valitsin näyttää kirjaamisen tilan', async () => {
+    const wrapper = await asenna()
+    // Aluksi tyhjä.
+    expect(wrapper.get('#kilpailijavalinta').text()).toContain('tyhjä')
+
+    // Yksi laukaus → kesken, 1/20.
+    await arvoNappain(wrapper, '9').trigger('click')
+    expect(wrapper.get('#kilpailijavalinta').text()).toContain('1/20')
+  })
+
+  it('väärän ruudun voi korjata napauttamalla sitä ja syöttämällä uuden arvon', async () => {
+    const wrapper = await asenna()
+
+    await arvoNappain(wrapper, '9').trigger('click')
+    await arvoNappain(wrapper, '8').trigger('click')
+    await arvoNappain(wrapper, '7').trigger('click')
+
+    // Toinen laukaus meni väärin: napautetaan sitä ja syötetään oikea arvo.
+    const ruudut = wrapper.findAll('.ruutu')
+    await ruudut[1]!.trigger('click')
+    await arvoNappain(wrapper, '10').trigger('click')
+
+    const laukaukset = store.kilpailija(kilpailija.id)?.osallistumiset.RA1?.kilpasarjat[0]
+      ?.laukaukset
+    expect(laukaukset?.slice(0, 3)).toEqual([9, 10, 7])
   })
 
   it('kertoo jos lajiin ei osallistu kukaan', async () => {

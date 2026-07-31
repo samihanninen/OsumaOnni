@@ -18,4 +18,12 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    /*
+     * ExcelJS on noin 930 kB oma paketti. Se ladataan tarkoituksella vasta kun tuloksia
+     * viedään tai tuodaan (dynaaminen import), joten se ei ole mukana sovelluksen
+     * käynnistyksessä. Nostetaan raja, jottei odotettu tilanne näytä virheeltä CI:ssä.
+     */
+    chunkSizeWarningLimit: 1000,
+  },
 })
