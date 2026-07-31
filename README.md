@@ -17,7 +17,11 @@ käytettävissä puhelimella ampumaradalla. Tämä versio korjaa nämä kolme as
 
 ## Ominaisuudet
 
-- **Neljä lajia** — RA1 Pistooliammunta, RA2 Perinnekivääriammunta, RA3 Reserviläiskivääriammunta, RA4 Reserviläishaulikkoammunta
+- **Neljä luokkaa** — RA1–RA4:
+  - **RA1 ja RA2** — itselataava kertatulikivääri, kaliiperi 5,45–8,00 mm
+    (perusvarustus, sotilaskäyttöön suunniteltu tai vastaava)
+  - **RA3 ja RA4** — itselataava pistooli, kaliiperi vähintään 9,00 mm
+    (olkatueton, irrotettava lipas)
 - **Kolme sarjaa × 10 laukausta** per laji, sarjojen määrä ja laukausmäärä säädettävissä
 - **Napakymppi** (`*`) ja **huti** (`-`) — napakymppi lasketaan kympiksi ja kerää napalaskuriin
 - **Kisatyypit** — 3-asentokilpailu (S1+S2+S3), 2 sarjaa parempi voimaan (MAX), 1 sarja
