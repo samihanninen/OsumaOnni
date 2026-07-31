@@ -1,0 +1,59 @@
+name: Julkaisu
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Yksi julkaisu kerrallaan. Ei peruuteta kesken: keskeytynyt julkaisu voisi jättää
+# sivuston epämääräiseen tilaan.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  rakenna:
+    name: Rakenna
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # Nopeat tarkistukset ennen julkaisua, jottei rikkinäinen versio päädy verkkoon.
+      # Selaintestit ajetaan CI-työnkulussa rinnakkain.
+      - name: Tyyppitarkistus
+        run: npm run type-check
+
+      - name: Yksikkötestit
+        run: npm run test:unit
+
+      - name: Rakenna
+        run: npm run build
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  julkaise:
+    name: Julkaise GitHub Pagesiin
+    needs: rakenna
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.julkaisu.outputs.page_url }}
+    steps:
+      - id: julkaisu
+        uses: actions/deploy-pages@v5

@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Peruuta vanhentuneet ajot samasta haarasta, mutta älä koskaan kesken julkaisun.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tarkistukset:
+    name: Tarkistukset ja yksikkötestit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Tyylintarkistus
+        run: npm run lint
+
+      - name: Tyyppitarkistus
+        run: npm run type-check
+
+      - name: Yksikkötestit
+        run: npm run test:unit
+
+  selaintestit:
+    name: Selaintestit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # Vain Chromium ja WebKit: tulokset kirjataan Androidilla ja iOS:llä, joten nämä
+      # kattavat oikean käyttäjäkunnan. --with-deps asentaa Linuxin järjestelmäkirjastot.
+      - name: Asenna selaimet
+        run: npx playwright install --with-deps chromium webkit
+
+      # Playwright käyttää CI:ssä preview-palvelinta, joka tarjoilee valmiin buildin.
+      - name: Rakenna sovellus
+        run: npm run build
+
+      - name: Selaintestit
+        run: npm run test:e2e
+
+      - name: Tallenna raportti epäonnistuessa
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-raportti
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+          if-no-files-found: ignore
