@@ -1,10 +1,275 @@
 <script setup lang="ts">
-// Toteutus tulee myöhemmässä vaiheessa.
+import { computed, ref } from 'vue'
+import { RouterLink } from 'vue-router'
+import { storeToRefs } from 'pinia'
+import { useKisaStore } from '@/stores/kisa'
+import { LAJI_KOODIT, LUOKAT, LUOKKA_NIMET } from '@/core/lajit'
+import { yhdistysLaji, yhdistysYhteistulos } from '@/core/yhdistykset'
+import { kokonaiskilpailu } from '@/core/kokonaiskilpailu'
+import type { Laji, Luokka } from '@/types/kisa'
+
+const store = useKisaStore()
+const { kisa } = storeToRefs(store)
+
+/** Aseluokkarajaus. Oletuksena kaikki luokat lasketaan yhteen, kuten Excel-versiossa. */
+const luokka = ref<Luokka | 'kaikki'>('kaikki')
+
+const parhaita = computed(() => kisa.value.asetukset.laskettavatParhaat)
+
+const optiot = computed(() => ({
+  parhaita: parhaita.value,
+  ...(luokka.value === 'kaikki' ? {} : { luokka: luokka.value }),
+}))
+
+const yhteistulos = computed(() => yhdistysYhteistulos(kisa.value.kilpailijat, optiot.value))
+
+function lajiTulokset(laji: Laji) {
+  return yhdistysLaji(kisa.value.kilpailijat, laji, {
+    ...optiot.value,
+    maaritys: kisa.value.asetukset.lajiMaaritykset[laji],
+  })
+}
+
+const henkilokohtainen = computed(() => kokonaiskilpailu(kisa.value.kilpailijat))
+
+const onTuloksia = computed(() => yhteistulos.value.length > 0)
 </script>
 
 <template>
   <section class="sivu">
-    <h1>Yhdistyskilpailu</h1>
-    <p class="tulossa">Tämä näkymä ei ole vielä toteutettu.</p>
+    <h1>Yhdistys- ja kokonaiskilpailu</h1>
+    <p>
+      Yhdistyksen lajitulos on parhaiden {{ parhaita }} kilpailijan summa. Sääntöjen mukaan
+      joukkueen koko on 3 ampujaa; määrää voi muuttaa
+      <RouterLink to="/kisatiedot">kisatiedoissa</RouterLink>.
+    </p>
+
+    <div class="suodatin">
+      <span class="suodatin-otsikko">Aseluokka</span>
+      <div class="napit" role="group" aria-label="Aseluokka">
+        <button
+          type="button"
+          class="pikkunappi"
+          :class="{ 'pikkunappi--valittu': luokka === 'kaikki' }"
+          @click="luokka = 'kaikki'"
+        >
+          Kaikki yhdessä
+        </button>
+        <button
+          v-for="l in LUOKAT"
+          :key="l"
+          type="button"
+          class="pikkunappi"
+          :class="{ 'pikkunappi--valittu': luokka === l }"
+          @click="luokka = l"
+        >
+          {{ LUOKKA_NIMET[l] }}
+        </button>
+      </div>
+    </div>
+
+    <p v-if="!onTuloksia" class="tulossa">
+      Ei vielä tuloksia. Kirjaa laukauksia, niin yhdistysten tilanne päivittyy tähän.
+    </p>
+
+    <template v-else>
+      <h2>Yhteistulos</h2>
+      <div class="taulukko-kehys">
+        <table>
+          <thead>
+            <tr>
+              <th class="numero">Sija</th>
+              <th>Yhdistys</th>
+              <th v-for="laji in LAJI_KOODIT" :key="laji" class="numero">{{ laji }}</th>
+              <th class="numero">Yhteensä</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="rivi in yhteistulos" :key="rivi.yhdistys">
+              <td class="numero sija">
+                {{ rivi.sija }}<span v-if="rivi.jaettu" class="jaettu">.</span>
+              </td>
+              <th scope="row">{{ rivi.yhdistys }}</th>
+              <td v-for="laji in LAJI_KOODIT" :key="laji" class="numero">
+                {{ rivi.lajipisteet[laji] || '' }}
+              </td>
+              <td class="numero yhteensa">{{ rivi.pisteet }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <section v-for="laji in LAJI_KOODIT" :key="laji" class="lajiosio">
+        <h2>{{ laji }}</h2>
+        <p v-if="lajiTulokset(laji).length === 0" class="tyhja">Ei tuloksia tässä lajissa.</p>
+        <div v-else class="taulukko-kehys">
+          <table>
+            <thead>
+              <tr>
+                <th class="numero">Sija</th>
+                <th>Yhdistys</th>
+                <th class="numero">Tulos</th>
+                <th class="numero">Ampujia</th>
+                <th>Huomioidut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="rivi in lajiTulokset(laji)" :key="rivi.yhdistys">
+                <td class="numero sija">
+                  {{ rivi.sija }}<span v-if="rivi.jaettu" class="jaettu">.</span>
+                </td>
+                <th scope="row">
+                  {{ rivi.yhdistys }}
+                  <span v-if="!rivi.taysiJoukkue" class="vajaa" :title="`Alle ${parhaita} ampujaa`">
+                    vajaa
+                  </span>
+                </th>
+                <td class="numero yhteensa">{{ rivi.pisteet }}</td>
+                <td class="numero">{{ rivi.kilpailijoita }}</td>
+                <td class="huomioidut">
+                  <span v-for="h in rivi.huomioidut" :key="h.kilpailija.id" class="huomioitu">
+                    {{ h.kilpailija.sukunimi }} <strong>{{ h.pisteet }}</strong>
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="lajiosio">
+        <h2>Kokonaiskilpailu — henkilökohtainen</h2>
+        <p class="selite">
+          Kilpailijan tulosten summa kaikista lajeista. Tasatuloksen ratkaisee parempi
+          RA2:n tulos.
+        </p>
+        <div class="taulukko-kehys">
+          <table>
+            <thead>
+              <tr>
+                <th class="numero">Sija</th>
+                <th>Nimi</th>
+                <th>Yhdistys</th>
+                <th v-for="laji in LAJI_KOODIT" :key="laji" class="numero">{{ laji }}</th>
+                <th class="numero">Yhteensä</th>
+                <th class="numero">Lajeja</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="rivi in henkilokohtainen" :key="rivi.kilpailija.id">
+                <td class="numero sija">
+                  {{ rivi.sija }}<span v-if="rivi.jaettu" class="jaettu">.</span>
+                </td>
+                <th scope="row">
+                  {{ rivi.kilpailija.sukunimi
+                  }}<span class="etunimi">, {{ rivi.kilpailija.etunimi }}</span>
+                </th>
+                <td>{{ rivi.kilpailija.yhdistys || '—' }}</td>
+                <td v-for="laji in LAJI_KOODIT" :key="laji" class="numero">
+                  {{ rivi.lajipisteet[laji] ?? '' }}
+                </td>
+                <td class="numero yhteensa">{{ rivi.pisteet }}</td>
+                <td class="numero">
+                  {{ rivi.lajeja }}<span v-if="rivi.kaikkiLajit" class="taysi" title="Kaikki lajit">✓</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </template>
   </section>
 </template>
+
+<style scoped>
+.suodatin {
+  margin: 0.85rem 0 1.25rem;
+}
+.suodatin-otsikko {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--vari-teksti-himmea);
+  margin-bottom: 0.25rem;
+}
+.napit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.pikkunappi {
+  min-height: 40px;
+  padding: 0.3rem 0.7rem;
+  font: inherit;
+  font-size: 0.9rem;
+  border: 1px solid var(--vari-reuna);
+  border-radius: var(--reunapyoristys);
+  background: var(--vari-tausta-korotettu);
+  color: var(--vari-teksti-himmea);
+  cursor: pointer;
+}
+.pikkunappi--valittu {
+  border-color: var(--vari-korostus);
+  color: var(--vari-korostus);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 1.05rem;
+  margin: 1.5rem 0 0.5rem;
+}
+.lajiosio {
+  margin-top: 0.5rem;
+}
+.selite {
+  font-size: 0.85rem;
+  color: var(--vari-teksti-himmea);
+  margin-bottom: 0.6rem;
+}
+.tyhja {
+  font-size: 0.9rem;
+  color: var(--vari-teksti-himmea);
+}
+
+.sija {
+  font-weight: 700;
+}
+.jaettu {
+  color: var(--vari-teksti-himmea);
+}
+.yhteensa {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.etunimi {
+  font-weight: 400;
+  color: var(--vari-teksti-himmea);
+}
+.vajaa {
+  margin-left: 0.35rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  background: var(--vari-varoitus-tausta);
+  color: var(--vari-varoitus);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.taysi {
+  margin-left: 0.25rem;
+  color: var(--vari-korostus);
+}
+.huomioidut {
+  white-space: normal;
+}
+.huomioitu {
+  display: inline-block;
+  margin-right: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--vari-teksti-himmea);
+}
+.huomioitu strong {
+  color: var(--vari-teksti);
+  font-variant-numeric: tabular-nums;
+}
+</style>

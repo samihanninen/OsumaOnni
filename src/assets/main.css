@@ -183,6 +183,51 @@ th.numero {
   font-variant-numeric: tabular-nums;
 }
 
+/*
+ * Tulostus: tuloslistat päätyvät usein ampumaradan seinälle. Piilotetaan navigaatio ja
+ * koristeet, avataan taulukoiden vieritys ja pakotetaan mustavalkoinen kontrasti.
+ */
+@media print {
+  body::before {
+    display: none;
+  }
+  .ylapalkki,
+  .ohita,
+  .suodattimet,
+  .suodatin,
+  .tapavalinta,
+  .lajivalinta,
+  .nappi,
+  button {
+    display: none !important;
+  }
+  .sisalto {
+    max-width: none;
+    padding: 0;
+  }
+  .taulukko-kehys {
+    overflow: visible;
+    border: 0;
+  }
+  table {
+    font-size: 10pt;
+  }
+  th {
+    position: static;
+    background: transparent;
+  }
+  tr {
+    break-inside: avoid;
+  }
+  h2 {
+    break-after: avoid;
+  }
+  * {
+    color: #000 !important;
+    background: transparent !important;
+  }
+}
+
 /* Painikkeet. */
 .nappi {
   display: inline-flex;
