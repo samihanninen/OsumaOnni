@@ -17,16 +17,28 @@ käytettävissä puhelimella ampumaradalla. Tämä versio korjaa nämä kolme as
 
 ## Ominaisuudet
 
-- **Neljä luokkaa** — RA1–RA4:
-  - **RA1 ja RA2** — itselataava kertatulikivääri, kaliiperi 5,45–8,00 mm
-    (perusvarustus, sotilaskäyttöön suunniteltu tai vastaava)
-  - **RA3 ja RA4** — itselataava pistooli, kaliiperi vähintään 9,00 mm
-    (olkatueton, irrotettava lipas)
-- **Kolme sarjaa × 10 laukausta** per laji, sarjojen määrä ja laukausmäärä säädettävissä
-- **Napakymppi** (`*`) ja **huti** (`-`) — napakymppi lasketaan kympiksi ja kerää napalaskuriin
-- **Kisatyypit** — 3-asentokilpailu (S1+S2+S3), 2 sarjaa parempi voimaan (MAX), 1 sarja
-- **Sijoitukset** automaattisesti; tasatuloksen ratkaisee napojen määrä
-- **Yhdistyskilpailu** — lajikohtainen ja yhteistulos, parhaiden N kilpailijan summa (oletus 3)
+- **Neljä lajia RESUL:n virallisten sääntöjen mukaisesti** (versiot 1.6 / 2025):
+
+  | Laji | Ase | Kilpasarjat | Tulos | Etäisyys | Asento |
+  |---|---|---|---|---|---|
+  | **RA1** | itselataava kivääri, 5,45–8,00 mm | 2 × 10 ls | parempi sarja | 150 m | makuu |
+  | **RA2** | itselataava kivääri, 5,45–8,00 mm | 3 × 6 ls | sarjojen summa | 150 m | makuu |
+  | **RA3** | itselataava pistooli, väh. 9,00 mm | 2 × 10 ls | parempi sarja | 25 m | seisten |
+  | **RA4** | itselataava pistooli, väh. 9,00 mm | 2 × 10 ls (tuplat) | parempi sarja | 25 m | seisten |
+
+- **Vakio- ja avoin luokka** erikseen — avoimessa luokassa optiikka on sallittu, joten
+  tulokset lasketaan ja järjestetään luokittain erikseen
+- **Ikäsarjat H ja H50**
+- **Napakymppi** (`*`) ja **ohilaukaus** (`-`) — napakymppi on 10 pistettä ja kirjautuu
+  napalaskuriin tasatulosten ratkaisemista varten
+- **Sijoitukset virallisen tasatulossäännön mukaan** — iskemien määrä, sitten napakympit,
+  kympit, ysit jne.; parempi-sarja-lajeissa tarvittaessa myös huonompi sarja. Sijoilla 9→
+  tasatulokset jaetaan sukunimen mukaisessa aakkosjärjestyksessä
+- **Sääntörikkeet** −2 pistettä kerrallaan; turvallisuusrike mitätöi tuloksen
+- **Yhdistys- ja joukkuekilpailu** — lajikohtainen ja yhteistulos, parhaiden 3 kilpailijan
+  summa (joukkueen koko sääntöjen mukaan 3 ampujaa)
+- **Sarjarakenne on muokattavissa** — säännöt muuttuvat, joten laukausmäärät ja sarjojen
+  määrä ovat asetuksia, ei koodia
 - **Yksi kilpailijalista** — nimi ja yhdistys kirjataan kertaalleen, lajit valitaan rastittamalla
 - **Ei kilpailijarajaa** — Excel-version 50 kilpailijan katto poistuu
 - **Mobiilikäyttö** — puhelimella iso näppäimistö, tietokoneella Excelin tapainen taulukko
