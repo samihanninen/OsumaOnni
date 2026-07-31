@@ -33,8 +33,13 @@ export default defineConfig({
   use: {
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
     actionTimeout: 0,
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.CI ? 'http://localhost:4173' : 'http://localhost:5173',
+    /*
+     * Base URL. Polun on sisällettävä `/OsumaOnni/`, koska sovellus julkaistaan GitHub
+     * Pagesin alihakemistoon ja Vite tarjoilee sen samasta polusta myös paikallisesti.
+     */
+    baseURL: process.env.CI
+      ? 'http://localhost:4173/OsumaOnni/'
+      : 'http://localhost:5173/OsumaOnni/',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -51,12 +56,11 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
       },
     },
-    {
-      name: 'firefox',
-      use: {
-        ...devices['Desktop Firefox'],
-      },
-    },
+    /*
+     * Firefox on jätetty pois tarkoituksella: tulokset kirjataan käytännössä Androidilla
+     * ja iOS:llä, joten Chromium ja WebKit kattavat oikean käyttäjäkunnan. Tämä pitää
+     * myös CI-ajon nopeana. Lisää tarvittaessa devices['Desktop Firefox'].
+     */
     {
       name: 'webkit',
       use: {

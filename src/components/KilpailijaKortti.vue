@@ -228,6 +228,8 @@ function sarjanNimi(i: number): string {
 .luku-arvo {
   font-size: 1.35rem;
   font-variant-numeric: tabular-nums;
+  /* Varataan tila kolminumeroiselle luvulle, jottei 0 → 100 muuta rivin korkeutta. */
+  min-width: 3ch;
 }
 .rangaistus,
 .hylatty {

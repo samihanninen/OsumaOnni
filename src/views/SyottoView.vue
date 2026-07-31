@@ -431,17 +431,36 @@ function taulukkoHylatty(id: string, hylatty: boolean) {
   flex: 0 0 auto;
 }
 .valitsin select {
-  flex: 1 1 auto;
+  /* flex-basis 0 estää valitun vaihtoehdon tekstin pituuden vaikuttamisen leveyteen,
+     jottei rivi levene edistymistekstin kasvaessa ja siirrä alla olevaa sisältöä. */
+  flex: 1 1 0;
   min-width: 0;
 }
 .laskuri {
-  flex: 0 0 auto;
+  /* Kiinteä leveys ja tasavälinen numerointi: "1 / 2" ja "10 / 22" eivät siirrä mitään. */
+  flex: 0 0 4.5rem;
+  text-align: right;
   font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
   color: var(--vari-teksti-himmea);
 }
+/*
+ * Näppäimistö kiinnitetään näytön alalaitaan.
+ *
+ * Kahdesta syystä. Ergonomia: näppäimet ovat peukalon ulottuvilla eikä niitä tarvitse
+ * etsiä vierittämällä. Ennen kaikkea kuitenkin turvallisuus: sen yläpuolella oleva
+ * sisältö muuttuu kirjaamisen aikana (edistymisteksti, kasvavat lukemat, ajastimeen
+ * perustuva vientimuistutus). Ilman kiinnitystä näppäimet liikkuisivat kesken nopeaa
+ * syöttöä sormen alla, ja väärä napautus tarkoittaisi väärää tulosta.
+ */
 .nappaimisto-alue {
-  margin: 0.85rem 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  margin: 0.85rem 0 0;
+  padding: 0.6rem 0 0.5rem;
+  background: var(--vari-tausta);
+  border-top: 1px solid var(--vari-reuna);
 }
 
 .lisatiedot {

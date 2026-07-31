@@ -25,6 +25,17 @@ export default defineConfigWithVueTs(
   {
     ...pluginPlaywright.configs['flat/recommended'],
     files: ['e2e/**/*.{test,spec}.{js,ts,jsx,tsx}'],
+    rules: {
+      ...pluginPlaywright.configs['flat/recommended'].rules,
+      /*
+       * Ehdollinen `test.skip(cond, reason)` on Playwrightin oma suositeltu tapa rajata
+       * testi laitteen ominaisuuksien mukaan: osa toiminnoista on olemassa vain
+       * kosketuslaitteilla (Web Share) tai vain hiirellä (taulukkosyöttö). Sääntö ei
+       * erottele tätä pysyvästi ohitetusta testistä, ja ohitus on parempi kuin
+       * ehtolauseet väittämien ympärillä — ohitus näkyy raportissa.
+       */
+      'playwright/no-skipped-test': ['warn', { allowConditional: true }],
+    },
   },
 
   {

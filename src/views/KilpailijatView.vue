@@ -70,7 +70,18 @@ function poista(id: string) {
         </div>
         <div class="kentta">
           <label for="sukunimi">Sukunimi</label>
-          <input id="sukunimi" v-model="uusi.sukunimi" type="text" autocomplete="off" required />
+          <!--
+            Ei `required`-määritettä: selaimen oma tarkistus estäisi lähetyksen ja näyttäisi
+            vain yleisluontoisen kuplan, jolloin oma viesti jäisi näkymättä. Tässä syy on
+            olennainen tieto — sukunimeä tarvitaan tasatulosten järjestämiseen.
+          -->
+          <input
+            id="sukunimi"
+            v-model="uusi.sukunimi"
+            type="text"
+            autocomplete="off"
+            aria-describedby="sukunimi-virhe"
+          />
         </div>
         <div class="kentta">
           <label for="yhdistys">Yhdistys / ryhmä</label>
@@ -94,7 +105,9 @@ function poista(id: string) {
         </div>
       </div>
 
-      <p v-if="virhe" class="huomio huomio--virhe">{{ virhe }}</p>
+      <p v-if="virhe" id="sukunimi-virhe" class="huomio huomio--virhe" role="alert">
+        {{ virhe }}
+      </p>
 
       <button type="submit" class="nappi nappi--ensisijainen">Lisää kilpailija</button>
     </form>
