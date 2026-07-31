@@ -1,10 +1,419 @@
 <script setup lang="ts">
-// Toteutus tulee myöhemmässä vaiheessa.
+import { computed, ref, watch } from 'vue'
+import { useRoute, RouterLink } from 'vue-router'
+import { storeToRefs } from 'pinia'
+import { useKisaStore } from '@/stores/kisa'
+import { useLaiteStore } from '@/stores/laite'
+import { useTyopoyta } from '@/composables/useMediaKysely'
+import { LAJI_KOODIT, onLaji } from '@/core/lajit'
+import type { Laji, Laukaus, Luokka } from '@/types/kisa'
+import LaukausNappaimisto from '@/components/LaukausNappaimisto.vue'
+import KilpailijaKortti from '@/components/KilpailijaKortti.vue'
+import TuloskorttiTaulukko from '@/components/TuloskorttiTaulukko.vue'
+
+const route = useRoute()
+const store = useKisaStore()
+const laite = useLaiteStore()
+const { kisa } = storeToRefs(store)
+
+const tyopoyta = useTyopoyta()
+
+const laji = computed<Laji>(() => {
+  const p = route.params.laji
+  const arvo = Array.isArray(p) ? p[0] : p
+  return onLaji(arvo) ? arvo : 'RA1'
+})
+
+const maaritys = computed(() => kisa.value.asetukset.lajiMaaritykset[laji.value])
+
+/** Lajin osallistujat sukunimen mukaan — sama järjestys kuin muissa listoissa. */
+const osallistujat = computed(() =>
+  kisa.value.kilpailijat
+    .filter((k) => k.osallistumiset[laji.value])
+    .sort(
+      (a, b) =>
+        a.sukunimi.localeCompare(b.sukunimi, 'fi') || a.etunimi.localeCompare(b.etunimi, 'fi'),
+    ),
+)
+
+/** Taulukkosyöttö käytössä? `auto` noudattaa laitetta. */
+const taulukossa = computed(() => {
+  if (laite.syottotapa === 'taulukko') return true
+  if (laite.syottotapa === 'nappaimisto') return false
+  return tyopoyta.value
+})
+
+// ---------- Näppäimistösyötön tila ----------
+
+const kohdistus = ref(0)
+const aktiivinenSarja = ref(0)
+const aktiivinenLaukaus = ref(0)
+
+const nykyinen = computed(() => osallistujat.value[kohdistus.value])
+
+/** Etsii ensimmäisen tyhjän laukauksen, jotta syöttö jatkuu luontevasti. */
+function siirryEnsimmaiseenTyhjaan() {
+  const o = nykyinen.value?.osallistumiset[laji.value]
+  if (!o) return
+  for (let s = 0; s < o.kilpasarjat.length; s++) {
+    const laukaukset = o.kilpasarjat[s]?.laukaukset ?? []
+    const i = laukaukset.findIndex((l) => l === null)
+    if (i >= 0) {
+      aktiivinenSarja.value = s
+      aktiivinenLaukaus.value = i
+      return
+    }
+  }
+  // Kaikki täynnä: jää viimeiseen ruutuun.
+  const viimeinen = o.kilpasarjat.length - 1
+  aktiivinenSarja.value = Math.max(0, viimeinen)
+  aktiivinenLaukaus.value = Math.max(0, (o.kilpasarjat[viimeinen]?.laukaukset.length ?? 1) - 1)
+}
+
+// Pidä kohdistus rajoissa, kun laji tai osallistujalista vaihtuu.
+watch([laji, () => osallistujat.value.length], () => {
+  kohdistus.value = Math.min(kohdistus.value, Math.max(0, osallistujat.value.length - 1))
+  siirryEnsimmaiseenTyhjaan()
+})
+
+function valitseRuutu(sarja: number, laukaus: number) {
+  aktiivinenSarja.value = sarja
+  aktiivinenLaukaus.value = laukaus
+}
+
+/** Siirtää seuraavaan ruutuun; sarjan lopussa seuraavan sarjan alkuun. */
+function seuraavaRuutu() {
+  const o = nykyinen.value?.osallistumiset[laji.value]
+  const sarja = o?.kilpasarjat[aktiivinenSarja.value]
+  if (!o || !sarja) return
+
+  if (aktiivinenLaukaus.value + 1 < sarja.laukaukset.length) {
+    aktiivinenLaukaus.value++
+  } else if (aktiivinenSarja.value + 1 < o.kilpasarjat.length) {
+    aktiivinenSarja.value++
+    aktiivinenLaukaus.value = 0
+  }
+}
+
+function syotaNappaimistolla(arvo: Laukaus) {
+  const k = nykyinen.value
+  if (!k) return
+  store.asetaLaukaus(k.id, laji.value, aktiivinenSarja.value, aktiivinenLaukaus.value, arvo)
+  seuraavaRuutu()
+}
+
+/** Tyhjentää aktiivisen ruudun; jos se on jo tyhjä, siirtyy edelliseen ja tyhjentää sen. */
+function peruuta() {
+  const k = nykyinen.value
+  const o = k?.osallistumiset[laji.value]
+  if (!k || !o) return
+
+  const nyt = o.kilpasarjat[aktiivinenSarja.value]?.laukaukset[aktiivinenLaukaus.value]
+  if (nyt === null && (aktiivinenLaukaus.value > 0 || aktiivinenSarja.value > 0)) {
+    if (aktiivinenLaukaus.value > 0) {
+      aktiivinenLaukaus.value--
+    } else {
+      aktiivinenSarja.value--
+      aktiivinenLaukaus.value = (o.kilpasarjat[aktiivinenSarja.value]?.laukaukset.length ?? 1) - 1
+    }
+  }
+  store.asetaLaukaus(k.id, laji.value, aktiivinenSarja.value, aktiivinenLaukaus.value, null)
+}
+
+function vaihdaKilpailija(suunta: 1 | -1) {
+  const uusi = kohdistus.value + suunta
+  if (uusi < 0 || uusi >= osallistujat.value.length) return
+  kohdistus.value = uusi
+  siirryEnsimmaiseenTyhjaan()
+}
+
+// ---------- Taulukkosyötön käsittelijät ----------
+
+function taulukkoSyota(id: string, sarja: number, laukaus: number, arvo: Laukaus) {
+  store.asetaLaukaus(id, laji.value, sarja, laukaus, arvo)
+}
+function taulukkoLuokka(id: string, luokka: Luokka) {
+  store.asetaLuokka(id, laji.value, luokka)
+}
+function taulukkoRangaistukset(id: string, maara: number) {
+  store.asetaRangaistukset(id, laji.value, maara)
+}
+function taulukkoHylatty(id: string, hylatty: boolean) {
+  store.asetaHylatty(id, laji.value, hylatty)
+}
 </script>
 
 <template>
   <section class="sivu">
-    <h1>Tulosten syöttö</h1>
-    <p class="tulossa">Tämä näkymä ei ole vielä toteutettu.</p>
+    <header class="ylaosa">
+      <h1>Tulosten syöttö</h1>
+
+      <nav class="lajivalinta" aria-label="Laji">
+        <RouterLink
+          v-for="l in LAJI_KOODIT"
+          :key="l"
+          :to="{ name: 'syotto', params: { laji: l } }"
+          class="lajinappi"
+          :class="{ 'lajinappi--valittu': l === laji }"
+        >
+          {{ l }}
+          <small>{{ store.osallistujia(l) }}</small>
+        </RouterLink>
+      </nav>
+    </header>
+
+    <p class="lajitiedot">
+      <strong>{{ maaritys.nimi }}</strong>
+      <span class="erotin" aria-hidden="true">·</span>
+      {{ maaritys.kilpasarjoja }} × {{ maaritys.laukauksiaSarjassa }} laukausta
+      <span class="erotin" aria-hidden="true">·</span>
+      {{ maaritys.tulosSaanto === 'paras' ? 'parempi sarja huomioidaan' : 'sarjojen summa' }}
+    </p>
+
+    <p v-if="laite.luovutettu" class="huomio huomio--varoitus">
+      <strong>Tämä laite on luovuttanut kisan eteenpäin.</strong>
+      Syöttö on lukittu, jottei sama kisa haaraudu kahdelle laitteelle.
+      <button type="button" class="nappi jatka" @click="laite.jatkaSilti()">Jatka silti</button>
+    </p>
+
+    <p v-if="osallistujat.length === 0" class="tulossa">
+      Yksikään kilpailija ei osallistu lajiin {{ laji }}.
+      <RouterLink to="/kilpailijat">Lisää osallistujia</RouterLink>.
+    </p>
+
+    <template v-else>
+      <div class="tapavalinta">
+        <span class="tapa-otsikko">Syöttötapa</span>
+        <div class="tapanapit" role="group" aria-label="Syöttötapa">
+          <button
+            type="button"
+            class="tapanappi"
+            :class="{ 'tapanappi--valittu': laite.syottotapa === 'auto' }"
+            @click="laite.asetaSyottotapa('auto')"
+          >
+            Automaattinen
+          </button>
+          <button
+            type="button"
+            class="tapanappi"
+            :class="{ 'tapanappi--valittu': laite.syottotapa === 'nappaimisto' }"
+            @click="laite.asetaSyottotapa('nappaimisto')"
+          >
+            Näppäimistö
+          </button>
+          <button
+            type="button"
+            class="tapanappi"
+            :class="{ 'tapanappi--valittu': laite.syottotapa === 'taulukko' }"
+            @click="laite.asetaSyottotapa('taulukko')"
+          >
+            Taulukko
+          </button>
+        </div>
+      </div>
+
+      <!-- Taulukkosyöttö: oikea näppäimistö ja hiiri -->
+      <TuloskorttiTaulukko
+        v-if="taulukossa"
+        :kilpailijat="osallistujat"
+        :laji="laji"
+        :maaritys="maaritys"
+        :lukittu="laite.luovutettu"
+        @syota="taulukkoSyota"
+        @luokka="taulukkoLuokka"
+        @rangaistukset="taulukkoRangaistukset"
+        @hylatty="taulukkoHylatty"
+      />
+
+      <!-- Kosketussyöttö: laitteen omaa näppäimistöä ei avata lainkaan -->
+      <template v-else-if="nykyinen">
+        <p class="laskuri">Kilpailija {{ kohdistus + 1 }} / {{ osallistujat.length }}</p>
+
+        <KilpailijaKortti
+          :kilpailija="nykyinen"
+          :laji="laji"
+          :maaritys="maaritys"
+          :aktiivinen-sarja="aktiivinenSarja"
+          :aktiivinen-laukaus="aktiivinenLaukaus"
+          @valitse="valitseRuutu"
+        />
+
+        <LaukausNappaimisto
+          class="nappaimisto-alue"
+          :lukittu="laite.luovutettu"
+          @syota="syotaNappaimistolla"
+          @peruuta="peruuta"
+          @seuraava="vaihdaKilpailija(1)"
+          @edellinen="vaihdaKilpailija(-1)"
+        />
+
+        <details class="lisatiedot">
+          <summary>Sääntörikkeet ja hylkäys</summary>
+          <div class="lisakentat">
+            <div class="kentta">
+              <label :for="`rike-${nykyinen.id}`">Sääntörikkeitä (−2 p / kerta)</label>
+              <input
+                :id="`rike-${nykyinen.id}`"
+                type="number"
+                min="0"
+                max="20"
+                :disabled="laite.luovutettu"
+                :value="nykyinen.osallistumiset[laji]?.rangaistuksia ?? 0"
+                @change="
+                  store.asetaRangaistukset(
+                    nykyinen.id,
+                    laji,
+                    Number(($event.target as HTMLInputElement).value),
+                  )
+                "
+              />
+            </div>
+            <label class="valinta">
+              <input
+                type="checkbox"
+                :disabled="laite.luovutettu"
+                :checked="nykyinen.osallistumiset[laji]?.hylatty ?? false"
+                @change="
+                  store.asetaHylatty(nykyinen.id, laji, ($event.target as HTMLInputElement).checked)
+                "
+              />
+              <span>Hylätty (turvallisuusrike) — tulos mitätöidään</span>
+            </label>
+          </div>
+        </details>
+      </template>
+    </template>
   </section>
 </template>
+
+<style scoped>
+.ylaosa {
+  margin-bottom: 0.5rem;
+}
+
+.lajivalinta {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0.6rem 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.lajivalinta::-webkit-scrollbar {
+  display: none;
+}
+.lajinappi {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  min-height: 44px;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--vari-reuna);
+  border-radius: var(--reunapyoristys);
+  background: var(--vari-tausta-korotettu);
+  color: var(--vari-teksti);
+  text-decoration: none;
+  font-weight: 700;
+}
+.lajinappi small {
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: var(--vari-teksti-himmea);
+}
+.lajinappi--valittu {
+  background: var(--vari-korostus);
+  border-color: var(--vari-korostus);
+  color: #fff;
+}
+.lajinappi--valittu small {
+  color: rgb(255 255 255 / 80%);
+}
+
+.lajitiedot {
+  font-size: 0.88rem;
+  color: var(--vari-teksti-himmea);
+  margin-bottom: 0.85rem;
+}
+.erotin {
+  margin: 0 0.35rem;
+}
+
+.jatka {
+  margin-left: 0.5rem;
+  min-height: 36px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.tapavalinta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+.tapa-otsikko {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--vari-teksti-himmea);
+}
+.tapanapit {
+  display: flex;
+  gap: 0.25rem;
+}
+.tapanappi {
+  min-height: 36px;
+  padding: 0.3rem 0.6rem;
+  font: inherit;
+  font-size: 0.85rem;
+  border: 1px solid var(--vari-reuna);
+  border-radius: var(--reunapyoristys);
+  background: var(--vari-tausta-korotettu);
+  color: var(--vari-teksti-himmea);
+  cursor: pointer;
+}
+.tapanappi--valittu {
+  border-color: var(--vari-korostus);
+  color: var(--vari-korostus);
+  font-weight: 700;
+}
+
+.laskuri {
+  font-size: 0.85rem;
+  color: var(--vari-teksti-himmea);
+  margin-bottom: 0.4rem;
+}
+.nappaimisto-alue {
+  margin: 0.85rem 0;
+}
+
+.lisatiedot {
+  margin-top: 0.5rem;
+}
+.lisatiedot summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--vari-teksti-himmea);
+}
+.lisakentat {
+  padding: 0.5rem 0 0;
+  max-width: 26rem;
+}
+.valinta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.valinta input {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: 0 0 auto;
+}
+</style>

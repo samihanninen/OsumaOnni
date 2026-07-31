@@ -24,6 +24,16 @@ export const useLaiteStore = defineStore(
      */
     const luovutettu = ref(false)
 
+    /**
+     * Syöttötapa: `auto` valitsee laitteen mukaan, muut pakottavat valinnan.
+     * Tallennetaan, koska esimerkiksi tabletti + näppäimistö haluaa taulukon pysyvästi.
+     */
+    const syottotapa = ref<'auto' | 'nappaimisto' | 'taulukko'>('auto')
+
+    function asetaSyottotapa(tapa: 'auto' | 'nappaimisto' | 'taulukko') {
+      syottotapa.value = tapa
+    }
+
     function nimea(nimi: string) {
       laiteNimi.value = nimi.trim()
     }
@@ -46,10 +56,12 @@ export const useLaiteStore = defineStore(
       laiteNimi,
       viimeinenVienti,
       luovutettu,
+      syottotapa,
       nimea,
       merkitseVienti,
       merkitseLuovutetuksi,
       jatkaSilti,
+      asetaSyottotapa,
     }
   },
   { persist: true },
