@@ -8,3 +8,7 @@
  * projekteihin.
  */
 /// <reference types="pinia-plugin-persistedstate" />
+
+/* Tyypit vite-plugin-pwa:n virtuaalimoduulille `virtual:pwa-register/vue`. */
+/// <reference types="vite-plugin-pwa/vue" />
+/// <reference types="vite-plugin-pwa/client" />

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
+import TallennusVaroitus from '@/components/TallennusVaroitus.vue'
+import PaivitysIlmoitus from '@/components/PaivitysIlmoitus.vue'
 </script>
 
 <template>
@@ -21,8 +23,11 @@ import { RouterLink, RouterView } from 'vue-router'
   </header>
 
   <main id="sisalto" class="sisalto">
+    <TallennusVaroitus />
     <RouterView />
   </main>
+
+  <PaivitysIlmoitus />
 </template>
 
 <style scoped>

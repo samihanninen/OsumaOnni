@@ -72,9 +72,20 @@ seurantaan. Tiedot eivät siirry laitteiden välillä.
 sivustotiedot, käytät yksityistä selausikkunaa tai poistat sovelluksen. Selain voi
 myös itse poistaa tietoja tilan säästämiseksi.
 
-**Vie tulokset tiedostoon säännöllisesti kisan aikana.** Sovellus muistuttaa tästä ja
-näyttää, kuinka kauan edellisestä viennistä on kulunut. Sovelluksen asentaminen
-kotivalikkoon vähentää tietojen katoamisen riskiä selvästi.
+**Vie tulokset tiedostoon säännöllisesti kisan aikana.** Sovellus muistuttaa tästä
+automaattisesti: jos vientiä ei ole tehty lainkaan tai siitä on yli 30 minuuttia, sivun
+ylälaidassa näkyy huomautus.
+
+### Asentaminen laitteeseen
+
+Sovellus kannattaa asentaa kotivalikkoon (*Lisää Koti-valikkoon* / *Asenna sovellus*):
+
+- se toimii silloin **kokonaan ilman verkkoyhteyttä** — myös tulosten vienti Exceliin
+- selain karsii tallennettuja tietoja epätodennäköisemmin kuin tavallisessa välilehdessä
+- sovellus avautuu omana ikkunanaan ilman selaimen osoitepalkkia
+
+Päivitykset eivät asennu itsestään kesken kisan: uudesta versiosta tulee ilmoitus, ja
+päivityksen ajankohdan valitset itse. Kirjatut tulokset säilyvät päivityksessä.
 
 ---
 
@@ -188,7 +199,13 @@ npm run lint        # tarkistus
 npm run type-check  # TypeScript
 npm run build       # tuotantoversio hakemistoon dist/
 npm run preview     # esikatsele tuotantoversiota
+npm run kuvakkeet   # luo sovelluskuvakkeet uudelleen
 ```
+
+Sovelluskuvakkeet piirretään ohjelmallisesti (`scripts/luo-kuvakkeet.mjs`): kuvake on
+ampumataulu eli sisäkkäisiä renkaita, joten se syntyy pikseleittäin ilman
+kuvankäsittelykirjastoa. Näin kuvakkeet ovat toistettavissa eikä projektiin tarvitse
+tuoda binäärejä, joiden alkuperää ei voi tarkistaa.
 
 Julkaisu tapahtuu automaattisesti, kun muutokset viedään `main`-haaraan.
 

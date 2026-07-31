@@ -4,6 +4,13 @@ import { storeToRefs } from 'pinia'
 import { useKisaStore } from '@/stores/kisa'
 import { useLaiteStore } from '@/stores/laite'
 import { lataaTiedosto, lueTiedosto } from '@/io/lataa'
+import {
+  jaaTiedosto,
+  jakoKaytettavissa,
+  luoTiedosto,
+  luonnosTeksti,
+  mailtoOsoite,
+} from '@/io/jaa'
 import { LAJI_KOODIT } from '@/core/lajit'
 import type { TuontiYhteenveto } from '@/io/xlsxTuonti'
 
@@ -52,6 +59,69 @@ async function vie() {
   } finally {
     vienninTila.value = 'valmis'
   }
+}
+
+/** Näytetäänkö jakopainike? Käytännössä tosi puhelimissa, epätosi työpöydällä. */
+const voiJakaa = jakoKaytettavissa()
+
+/**
+ * Jakaa tiedoston laitteen jakovalikkoon, josta se lähtee sähköpostin liitteenä.
+ *
+ * Jos selain estää jaon (Safari vaatii kutsun heti käyttäjän eleen jälkeen, eikä
+ * tiedoston valmistelu aina mahdu tuohon ikkunaan), ladataan tiedosto sen sijaan,
+ * jottei painallus jää tuloksettomaksi.
+ */
+async function jaa() {
+  virhe.value = ''
+  ilmoitus.value = ''
+  vienninTila.value = 'kesken'
+  try {
+    const { vieKisa } = await import('@/io/xlsxVienti')
+    const nyt = new Date()
+    const { tavut, tiedostonimi } = await vieKisa(kisa.value, nyt)
+    const tiedosto = luoTiedosto(tavut, tiedostonimi)
+
+    const luonnos = luonnosTeksti({
+      kisanNimi: kisa.value.kisatiedot.nimi,
+      pvm: kisa.value.kisatiedot.pvm,
+      tiedostonimi,
+      kilpailijoita: store.kilpailijoita,
+    })
+
+    const tulos = await jaaTiedosto(tiedosto, {
+      otsikko: luonnos.aihe,
+      teksti: `${kisa.value.kisatiedot.nimi || 'Reserviläisammunta'} — tulokset`,
+    })
+
+    if (tulos === 'jaettu') {
+      laite.merkitseVienti(nyt.toISOString())
+      ilmoitus.value = 'Tiedosto jaettu.'
+    } else if (tulos === 'peruutettu') {
+      ilmoitus.value = 'Jakaminen peruutettiin. Tiedostoa ei viety.'
+    } else {
+      lataaTiedosto(tavut, tiedostonimi)
+      laite.merkitseVienti(nyt.toISOString())
+      ilmoitus.value =
+        tulos === 'estetty'
+          ? `Selain esti jakamisen, joten tiedosto ${tiedostonimi} ladattiin sen sijaan.`
+          : `Jakaminen ei ole tuettu tällä laitteella. Tiedosto ${tiedostonimi} ladattiin.`
+    }
+  } catch (e) {
+    virhe.value = e instanceof Error ? e.message : 'Jakaminen ei onnistunut.'
+  } finally {
+    vienninTila.value = 'valmis'
+  }
+}
+
+/** Avaa sähköpostiluonnoksen. Liite on lisättävä käsin — selain ei voi tehdä sitä. */
+function avaaSahkoposti() {
+  const luonnos = luonnosTeksti({
+    kisanNimi: kisa.value.kisatiedot.nimi,
+    pvm: kisa.value.kisatiedot.pvm,
+    tiedostonimi: 'ladattu Excel-tiedosto',
+    kilpailijoita: store.kilpailijoita,
+  })
+  window.location.href = mailtoOsoite(luonnos)
 }
 
 async function valitseTiedosto(e: Event) {
@@ -128,17 +198,46 @@ const eriKisa = computed(
       </p>
       <p v-else class="viimeksi vanha">Tuloksia ei ole vielä viety tiedostoon.</p>
 
-      <button
-        type="button"
-        class="nappi nappi--ensisijainen"
-        :disabled="vienninTila === 'kesken' || store.kilpailijoita === 0"
-        @click="vie"
-      >
-        {{ vienninTila === 'kesken' ? 'Viedään…' : 'Lataa Excel-tiedosto' }}
-      </button>
+      <div class="napit">
+        <button
+          v-if="voiJakaa"
+          type="button"
+          class="nappi nappi--ensisijainen"
+          :disabled="vienninTila === 'kesken' || store.kilpailijoita === 0"
+          @click="jaa"
+        >
+          {{ vienninTila === 'kesken' ? 'Valmistellaan…' : 'Jaa tulokset' }}
+        </button>
+        <button
+          type="button"
+          class="nappi"
+          :class="{ 'nappi--ensisijainen': !voiJakaa }"
+          :disabled="vienninTila === 'kesken' || store.kilpailijoita === 0"
+          @click="vie"
+        >
+          {{ vienninTila === 'kesken' ? 'Viedään…' : 'Lataa tiedosto' }}
+        </button>
+      </div>
+
       <p v-if="store.kilpailijoita === 0" class="vihje">
         Lisää ensin kilpailijoita, niin vienti aktivoituu.
       </p>
+
+      <p v-if="voiJakaa" class="vihje jakovihje">
+        <strong>Jaa tulokset</strong> antaa tiedoston laitteen jakovalikkoon, josta se
+        lähtee sähköpostin liitteenä.
+      </p>
+      <details v-else class="sahkoposti">
+        <summary>Lähettäminen sähköpostilla</summary>
+        <p class="vihje">
+          Tällä laitteella tiedosto pitää liittää viestiin itse: selaimen
+          <code>mailto:</code>-linkki ei voi sisältää liitettä. Lataa tiedosto ensin, avaa
+          sitten valmis luonnos ja liitä ladattu tiedosto siihen.
+        </p>
+        <button type="button" class="nappi" @click="avaaSahkoposti">
+          Avaa sähköpostiluonnos
+        </button>
+      </details>
     </section>
 
     <section class="lohko kortti">
