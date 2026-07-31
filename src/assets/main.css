@@ -1,0 +1,112 @@
+@import './base.css';
+
+/*
+ * Taustakuva: alkuperäinen siluettikuvitus (metsänreuna + ampuja makuuasennossa).
+ * Kiinnitetty ja hyvin läpinäkyvä, jottei se haittaa luettavuutta. Piirretään
+ * ::before-kerrokseen sisällön alle, jotta läpinäkyvyys ei periydy tekstiin.
+ *
+ * Vaihtaaksesi valokuvaan: korvaa url() ja säilytä matala opacity.
+ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url('./tausta.svg');
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: min(1400px, 170%) auto;
+  opacity: 0.07;
+}
+
+@media (prefers-color-scheme: dark) {
+  body::before {
+    /* Tummalla taustalla siluetti tarvitsee vähän enemmän näkyvyyttä */
+    opacity: 0.1;
+  }
+}
+
+/* Kunnioita käyttäjän kontrastitoivetta: piilota koriste kokonaan. */
+@media (prefers-contrast: more) {
+  body::before {
+    display: none;
+  }
+}
+
+/* Yleiset sivurakenteet, joita näkymät käyttävät. */
+
+.sivu > h1 {
+  font-size: 1.4rem;
+  line-height: 1.3;
+  margin-bottom: 0.5rem;
+}
+
+.sivu > p {
+  color: var(--vari-teksti-himmea);
+}
+
+.tulossa {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px dashed var(--vari-reuna);
+  border-radius: var(--reunapyoristys);
+  color: var(--vari-teksti-himmea);
+}
+
+/* Kortti — käytetään listoissa ja lomakkeissa. */
+.kortti {
+  background: var(--vari-tausta-korotettu);
+  border: 1px solid var(--vari-reuna);
+  border-radius: var(--reunapyoristys);
+  box-shadow: var(--varjo);
+  padding: 1rem;
+}
+
+/* Huomiolaatikot. */
+.huomio {
+  padding: 0.75rem 1rem;
+  border-radius: var(--reunapyoristys);
+  border: 1px solid transparent;
+}
+.huomio--varoitus {
+  background: var(--vari-varoitus-tausta);
+  border-color: var(--vari-varoitus);
+  color: var(--vari-varoitus);
+}
+.huomio--virhe {
+  background: var(--vari-virhe-tausta);
+  border-color: var(--vari-virhe);
+  color: var(--vari-virhe);
+}
+
+/* Painikkeet. */
+.nappi {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  /* 44px minimi — iOS:n suositus kosketuskohteelle */
+  min-height: 44px;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--vari-reuna);
+  border-radius: var(--reunapyoristys);
+  background: var(--vari-tausta-korotettu);
+  color: var(--vari-teksti);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+.nappi:hover {
+  border-color: var(--vari-korostus);
+}
+.nappi--ensisijainen {
+  background: var(--vari-korostus);
+  border-color: var(--vari-korostus);
+  color: #fff;
+}
+.nappi:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

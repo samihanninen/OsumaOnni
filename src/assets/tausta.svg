@@ -1,0 +1,87 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1400 900"
+  width="1400"
+  height="900"
+  role="img"
+  aria-label="Metsämaisema, jossa ampuja makuuasennossa"
+>
+  <title>Ampuja makuuasennossa metsänreunassa</title>
+  <defs>
+    <!-- Kuusi: latvasta tyveen kolmiportaisena siluettina -->
+    <path
+      id="kuusi"
+      d="M0,-100 L7,-60 L4,-60 L11,-34 L7,-34 L15,-8 L3,-8 L3,0 L-3,0 L-3,-8 L-15,-8 L-7,-34 L-11,-34 L-4,-60 L-7,-60 Z"
+    />
+  </defs>
+
+  <g fill="#5c6b5e">
+    <!-- Kaukainen metsänreuna -->
+    <g opacity="0.35">
+      <use href="#kuusi" transform="translate(60 742) scale(0.85)" />
+      <use href="#kuusi" transform="translate(150 748) scale(0.62)" />
+      <use href="#kuusi" transform="translate(232 744) scale(0.78)" />
+      <use href="#kuusi" transform="translate(325 750) scale(0.55)" />
+      <use href="#kuusi" transform="translate(470 746) scale(0.7)" />
+      <use href="#kuusi" transform="translate(560 750) scale(0.5)" />
+      <use href="#kuusi" transform="translate(648 742) scale(0.9)" />
+      <use href="#kuusi" transform="translate(742 748) scale(0.6)" />
+      <use href="#kuusi" transform="translate(830 745) scale(0.75)" />
+      <use href="#kuusi" transform="translate(925 750) scale(0.52)" />
+      <use href="#kuusi" transform="translate(1010 743) scale(0.86)" />
+      <use href="#kuusi" transform="translate(1105 749) scale(0.58)" />
+      <use href="#kuusi" transform="translate(1195 745) scale(0.72)" />
+      <use href="#kuusi" transform="translate(1290 750) scale(0.5)" />
+      <use href="#kuusi" transform="translate(1360 744) scale(0.8)" />
+    </g>
+
+    <!-- Lähempi puurivi -->
+    <g opacity="0.6">
+      <use href="#kuusi" transform="translate(20 800) scale(1.35)" />
+      <use href="#kuusi" transform="translate(700 802) scale(1.2)" />
+      <use href="#kuusi" transform="translate(880 806) scale(1.5)" />
+      <use href="#kuusi" transform="translate(1080 802) scale(1.15)" />
+      <use href="#kuusi" transform="translate(1250 808) scale(1.55)" />
+      <use href="#kuusi" transform="translate(1385 804) scale(1.3)" />
+    </g>
+
+    <!-- Maanpinta -->
+    <path
+      opacity="0.5"
+      d="M0,812 C180,798 340,806 520,800 C700,794 880,804 1060,798 C1200,793 1310,801 1400,796 L1400,900 L0,900 Z"
+    />
+
+    <!-- Ampuja makuuasennossa, kasvot oikealle -->
+    <g opacity="0.9" transform="translate(210 790) scale(1.85)">
+      <!-- Takajalat hieman haarassa -->
+      <path d="M2,-4 C22,-9 44,-12 64,-13 L66,-6 C46,-5 22,-1 3,2 Z" />
+      <path d="M6,-11 C26,-16 46,-18 64,-18 L65,-12 C46,-12 25,-9 7,-5 Z" />
+      <!-- Saappaat -->
+      <path d="M-2,-6 L4,-3 L3,3 L-5,1 Z" />
+      <path d="M2,-13 L9,-11 L8,-6 L0,-8 Z" />
+
+      <!-- Vartalo ja lantio -->
+      <path
+        d="M60,-19 C78,-23 96,-26 112,-27 C124,-28 132,-25 136,-21 L134,-11 C120,-9 100,-8 82,-8 C72,-8 64,-11 60,-13 Z"
+      />
+      <!-- Reppu selässä -->
+      <path d="M84,-27 C94,-33 110,-34 118,-30 L116,-25 C106,-27 94,-26 86,-24 Z" />
+
+      <!-- Kypärä -->
+      <path d="M132,-24 C136,-32 148,-34 154,-29 C158,-26 157,-22 154,-20 L136,-19 Z" />
+      <!-- Kasvot / leuka -->
+      <path d="M152,-19 C157,-19 160,-17 159,-14 L150,-13 Z" />
+
+      <!-- Etukäsi tukee asetta -->
+      <path d="M136,-17 C146,-15 156,-13 164,-10 L162,-5 C152,-8 142,-11 134,-12 Z" />
+
+      <!-- Ase: piippu, tukki ja lipas -->
+      <path d="M143,-22 L196,-29 L197,-25 L144,-18 Z" />
+      <path d="M196,-29 L214,-32 L214,-29 L196,-25 Z" />
+      <!-- Lipas -->
+      <path d="M158,-18 L166,-19 L169,-8 L161,-7 Z" />
+      <!-- Tähtäin -->
+      <path d="M180,-27 L184,-27 L184,-32 L180,-32 Z" />
+    </g>
+  </g>
+</svg>

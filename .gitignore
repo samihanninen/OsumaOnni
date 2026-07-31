@@ -70,3 +70,10 @@ lerna-debug.log*
 .claude/
 .cache/
 *.tsbuildinfo
+
+# Vite / tooling caches
+*.timestamp-*-*.mjs
+.eslintcache
+
+# Vitest
+__screenshots__/

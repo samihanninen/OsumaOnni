@@ -1,0 +1,75 @@
+/* Väripaletti — vaalea ja tumma teema laitteen asetuksen mukaan. */
+:root {
+  --vari-tausta: #f7f7f8;
+  --vari-tausta-korotettu: #ffffff;
+  --vari-reuna: #dcdce1;
+  --vari-teksti: #1c1c1f;
+  --vari-teksti-himmea: #62626c;
+  --vari-korostus: #1f6f4a;
+  --vari-korostus-himmea: #e6f2eb;
+  --vari-varoitus: #8a5a00;
+  --vari-varoitus-tausta: #fdf5e2;
+  --vari-virhe: #a4232b;
+  --vari-virhe-tausta: #fdeced;
+
+  --reunapyoristys: 10px;
+  --varjo:
+    0 1px 2px rgb(0 0 0 / 6%), 0 2px 8px rgb(0 0 0 / 4%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --vari-tausta: #16171a;
+    --vari-tausta-korotettu: #1f2125;
+    --vari-reuna: #33363c;
+    --vari-teksti: #ececf0;
+    --vari-teksti-himmea: #a0a2ac;
+    --vari-korostus: #58c795;
+    --vari-korostus-himmea: #1c3329;
+    --vari-varoitus: #f0c470;
+    --vari-varoitus-tausta: #33290f;
+    --vari-virhe: #f38b92;
+    --vari-virhe-tausta: #3a1c1f;
+
+    --varjo:
+      0 1px 2px rgb(0 0 0 / 40%), 0 2px 8px rgb(0 0 0 / 25%);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html {
+  /* Estä iOS:n automaattinen tekstin skaalaus vaakatilassa */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--vari-tausta);
+  color: var(--vari-teksti);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: var(--vari-korostus);
+}
+
+:focus-visible {
+  outline: 2px solid var(--vari-korostus);
+  outline-offset: 2px;
+}
