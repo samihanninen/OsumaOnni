@@ -23,11 +23,10 @@ import PaivitysIlmoitus from '@/components/PaivitysIlmoitus.vue'
   </header>
 
   <main id="sisalto" class="sisalto">
+    <PaivitysIlmoitus />
     <TallennusVaroitus />
     <RouterView />
   </main>
-
-  <PaivitysIlmoitus />
 </template>
 
 <style scoped>

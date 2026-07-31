@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onScopeDispose, ref, watch } from 'vue'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
 
 /**
@@ -11,6 +11,15 @@ import { useRegisterSW } from 'virtual:pwa-register/vue'
  */
 const { needRefresh, offlineReady, updateServiceWorker } = useRegisterSW()
 const piilotettu = ref(false)
+
+/** Offline-ilmoitus on pelkkä tiedote, joten se poistuu itsestään. */
+const OFFLINE_NAKYVISSA_MS = 8000
+
+watch(offlineReady, (valmis) => {
+  if (!valmis) return
+  const ajastin = setTimeout(() => (offlineReady.value = false), OFFLINE_NAKYVISSA_MS)
+  onScopeDispose(() => clearTimeout(ajastin))
+})
 
 function paivita() {
   void updateServiceWorker(true)
@@ -49,23 +58,25 @@ function ohita() {
 </template>
 
 <style scoped>
+/*
+ * Ilmoitus on tavallisessa tekstivirrassa, EI kelluvana laatikkona.
+ *
+ * Aiemmin tämä oli `position: fixed` näytön alalaidassa, jolloin se peitti juuri sen
+ * kohdan, johon laukausnäppäimistö on kiinnitetty — eli esti tulosten kirjaamisen,
+ * kunnes ilmoitus suljettiin. Vika ei näkynyt kehityspalvelimella, koska service worker
+ * rekisteröidään vasta tuotantoversiossa; selaintestit tuotantobuildia vasten paljastivat
+ * sen. Tekstivirrassa ilmoitus ei voi peittää mitään.
+ */
 .ilmoitus {
-  position: fixed;
-  bottom: 0.75rem;
-  left: 0.75rem;
-  right: 0.75rem;
-  z-index: 20;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.5rem;
-  max-width: 34rem;
-  margin: 0 auto;
+  margin-bottom: 1rem;
   padding: 0.6rem 0.85rem;
   border: 1px solid var(--vari-korostus);
   border-radius: var(--reunapyoristys);
   background: var(--vari-tausta-korotettu);
-  box-shadow: var(--varjo);
   font-size: 0.88rem;
 }
 .teksti {
