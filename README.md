@@ -26,6 +26,7 @@ käytettävissä puhelimella ampumaradalla. Tämä versio korjaa nämä kolme as
 - **Yksi kilpailijalista** — nimi ja yhdistys kirjataan kertaalleen, lajit valitaan rastittamalla
 - **Ei kilpailijarajaa** — Excel-version 50 kilpailijan katto poistuu
 - **Mobiilikäyttö** — puhelimella iso näppäimistö, tietokoneella Excelin tapainen taulukko
+- **Monta kirjaajaa** — useampi henkilö voi kirjata tuloksia omalla laitteellaan ja tulokset yhdistetään yhdelle laitteelle
 - **Offline** — asennettavissa kotivalikkoon ja toimii ilman verkkoyhteyttä
 - **Vienti ja tuonti Excel-tiedostona** — tulokset saa ulos ja takaisin sisään
 
@@ -93,6 +94,43 @@ tyhjentynyt: avaa viety tiedosto Excelissä, korjaa laukaus ja tuo tiedosto taka
 
 ---
 
+## Monta kirjaajaa samassa kisassa
+
+Kun tuloksia kirjaa useampi henkilö samaan aikaan eri laitteilla, tulokset yhdistetään
+lopuksi yhdelle laitteelle — ja sieltä yhteen Excel-tiedostoon.
+
+### Näin se toimii
+
+1. **Päälaite luo kisan** — kisatiedot ja kilpailijalista syötetään kertaalleen.
+2. **Kilpailijalista jaetaan** kirjaajien laitteille (linkkinä, QR-koodina tai tiedostona).
+3. **Jokaiselle kirjaajalle oma osuus** — esimerkiksi laji (RA1 yhdelle, RA2 toiselle) tai
+   oma kojeryhmä. Kun osuudet eivät mene päällekkäin, yhdistäminen on ristiriidatonta.
+4. **Kirjaajat syöttävät tulokset** omilla laitteillaan, myös ilman verkkoyhteyttä.
+5. **Tulokset yhdistetään päälaitteelle** — päälaite lukee kirjaajien osatulokset ja
+   yhdistää ne. Lopuksi vienti Exceliin sisältää kaikkien kirjaamat tulokset.
+
+### Yhdistämistavat
+
+| Tapa | Miten | Sopii |
+|---|---|---|
+| **Linkki** | Kirjaaja saa jakolinkin ja lähettää sen esim. WhatsAppilla; päälaite avaa linkin | Helpoin — ei kameraa eikä tiedostoja |
+| **QR-koodi** | Kirjaaja näyttää koodin, päälaite lukee sen kameralla | **Toimii täysin ilman verkkoyhteyttä** — paras ampumaradalla |
+| **Tiedosto** | Pieni tiedosto AirDropilla, Nearby Sharella tai sähköpostilla | Varmin, ei kokorajaa |
+
+### Ristiriidat
+
+Yhdistäminen ei koskaan ylikirjoita tuloksia huomaamatta. Jos kaksi laitetta on
+kirjannut saman kilpailijan saman sarjan eri tuloksin, sovellus näyttää ne rinnakkain
+ja kysyy kumpi jää voimaan. Tyhjän päälle kirjoitetaan aina huomautuksetta, ja saman
+tuloksen yhdistäminen uudelleen ei muuta mitään — saman koodin voi lukea kahdesti
+turvallisesti.
+
+> 🔒 **Tietosuojahuomio:** QR-koodi on ainoa tapa, jossa tiedot eivät poistu paikalta.
+> Linkki ja tiedosto kulkevat sen sovelluksen kautta, jolla ne lähetät (esim. WhatsApp).
+> Omaa palvelinta ei ole missään tavassa.
+
+---
+
 ## Teknologiat
 
 | Osa-alue | Valinta | Miksi |
@@ -103,6 +141,8 @@ tyhjentynyt: avaa viety tiedosto Excelissä, korjaa laukaus ja tuo tiedosto taka
 | Reititys | [Vue Router](https://router.vuejs.org/) (hash-tila) | Toimii GitHub Pagesilla ilman uudelleenohjauskiertoteitä |
 | Offline | [vite-plugin-pwa](https://vite-pwa-org.netlify.app/) | Asennettava sovellus, toimii ilman verkkoa |
 | Excel-tiedostot | [ExcelJS](https://github.com/exceljs/exceljs) | Ainoa selainkirjasto joka **kirjoittaa** monivälilehtisen tiedoston kaavoineen ja **lukee** sen takaisin |
+| QR-koodit | [qrcode](https://github.com/soldair/node-qrcode) + [jsQR](https://github.com/cozmo/jsQR) | Koodien luonti ja luku; jsQR varalla iOS-Safarissa, josta puuttuu `BarcodeDetector` |
+| Pakkaus | [pako](https://github.com/nodeca/pako) | Suurten osatulosten tiivistäminen QR-koodiin |
 | Yksikkötestit | [Vitest](https://vitest.dev/) | Laskennan vastaavuus alkuperäiseen Exceliin |
 | Selaintestit | [Playwright](https://playwright.dev/) | Ajaa myös WebKitiä, joten näppäimistö on testattavissa iPhone-näkymässä |
 | Laatu | [ESLint](https://eslint.org/) (flat config) + [Prettier](https://prettier.io/) | — |
