@@ -1,0 +1,117 @@
+/**
+ * Reserviläisammunnan tietomalli.
+ *
+ * TERMISTÖ — virallisissa säännöissä "sarja" tarkoittaa **ikäsarjaa** (H, H50), ja
+ * laukaussarjaa kutsutaan **kilpasarjaksi**. Alkuperäinen Excel käytti sanaa "sarja"
+ * laukaussarjasta. Tässä koodissa käytetään aina täsmällisiä nimiä `ikasarja` ja
+ * `kilpasarja` — pelkkää `sarja`-nimeä ei käytetä missään.
+ */
+
+/** Ammuntalaji. */
+export type Laji = 'RA1' | 'RA2' | 'RA3' | 'RA4'
+
+/** Aseluokka. Avoimessa luokassa optiikka on sallittu, joten luokat kilpailevat erikseen. */
+export type Luokka = 'vakio' | 'avoin'
+
+/** Ikäsarja. */
+export type IkaSarja = 'H' | 'H50'
+
+/** Napakympin merkki. Napakymppi on 10 pistettä, mutta se lasketaan erikseen tasatuloksia varten. */
+export const NAPAKYMPPI = '*'
+
+/** Ohilaukauksen merkki. */
+export const OHI = '-'
+
+/**
+ * Yksittäinen laukaus.
+ *
+ * - `1..10` — osuma, arvo pisteinä
+ * - `'*'`   — napakymppi, 10 pistettä
+ * - `'-'`   — ohilaukaus, 0 pistettä, **ei ole iskemä**
+ * - `0`     — ohilaukaus (sama kuin `'-'`; sallitaan syötön helpottamiseksi)
+ * - `null`  — ei vielä syötetty
+ */
+export type Laukaus = number | typeof NAPAKYMPPI | typeof OHI | null
+
+/** Yhden kilpasarjan laukaukset. Pituus = lajin `laukauksiaSarjassa`. */
+export type Kilpasarja = Laukaus[]
+
+/** Miten lajin kilpailutulos muodostuu kilpasarjoista. */
+export type TulosSaanto =
+  /** Vain paras kilpasarja huomioidaan (RA1, RA3, RA4). */
+  | 'paras'
+  /** Kaikkien kilpasarjojen summa (RA2). */
+  | 'summa'
+
+/** Lajin rakenne. Muokattavissa, koska säännöt muuttuvat. */
+export interface LajiMaaritys {
+  koodi: Laji
+  nimi: string
+  kuvaus: string
+  ase: string
+  kilpasarjoja: number
+  laukauksiaSarjassa: number
+  tulosSaanto: TulosSaanto
+  etaisyys: string
+  taulu: string
+  asento: string
+  /** Koelaukaukset eivät vaikuta tulokseen; tallennetaan vain tiedoksi. */
+  koelaukauksia: number
+}
+
+/** Yhden kilpasarjan laukaukset ja yhdistämistä varten tarvittava jäljitystieto. */
+export interface KilpasarjaTiedot {
+  laukaukset: Kilpasarja
+  /** ISO-aikaleima viimeisestä muutoksesta. Käytetään tulosten yhdistämisessä. */
+  muokattu?: string
+  /** Muutoksen tehneen laitteen tunniste. */
+  laiteId?: string
+}
+
+/** Kilpailijan osallistuminen yhteen lajiin. */
+export interface Osallistuminen {
+  /** Aseluokka tässä lajissa. Voi vaihdella lajeittain, koska se seuraa käytettyä asetta. */
+  luokka: Luokka
+  kilpasarjat: KilpasarjaTiedot[]
+  /** Sääntörikkeiden määrä. Jokainen vähentää 2 pistettä lopputuloksesta. */
+  rangaistuksia: number
+  /** Turvallisuusrike: kilpailija suljetaan pois ja tulos mitätöidään. */
+  hylatty: boolean
+  huom?: string
+}
+
+export interface Kilpailija {
+  id: string
+  etunimi: string
+  /** Erillinen sukunimi on pakollinen: sijoilla 9→ tasatulokset järjestetään sukunimen mukaan. */
+  sukunimi: string
+  yhdistys: string
+  ikasarja: IkaSarja
+  osallistumiset: Partial<Record<Laji, Osallistuminen>>
+}
+
+export interface Kisatiedot {
+  nimi: string
+  jarjestaja: string
+  paikka: string
+  pvm: string
+  kilpailunjohtaja: string
+  tuomari: string
+  kirjuri: string
+  muistiinpanot: string
+}
+
+export interface Asetukset {
+  /** Yhdistys- ja joukkuekilpailussa laskettavien parhaiden kilpailijoiden määrä. */
+  laskettavatParhaat: number
+  /** Lajikohtaiset rakenteet. Ylikirjoittaa oletukset, jos säännöt muuttuvat. */
+  lajiMaaritykset: Record<Laji, LajiMaaritys>
+}
+
+export interface Kisa {
+  schemaVersion: 1
+  kisaId: string
+  kisatiedot: Kisatiedot
+  asetukset: Asetukset
+  kilpailijat: Kilpailija[]
+}

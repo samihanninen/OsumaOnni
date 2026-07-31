@@ -1,5 +1,7 @@
 import { fileURLToPath } from 'node:url'
 import { mergeConfig, defineConfig, configDefaults } from 'vitest/config'
+// Ilman .ts-päätettä: Vite varoittaa tästä, mutta pääte rikkoisi tyyppitarkistuksen
+// (allowImportingTsExtensions ei ole käytössä). Varoitus on harmiton.
 import viteConfig from './vite.config'
 
 export default mergeConfig(
