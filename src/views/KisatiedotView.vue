@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useKisaStore } from '@/stores/kisa'
 import { LAJI_KOODIT, laukauksiaYhteensa, suurinTulos } from '@/core/lajit'
+import KisanPaattaminen from '@/components/KisanPaattaminen.vue'
 import type { Laji, TulosSaanto } from '@/types/kisa'
 
 const store = useKisaStore()
@@ -171,6 +172,8 @@ function paivitaSaanto(laji: Laji, arvo: string) {
         <textarea id="muistiinpanot" v-model="tiedot.muistiinpanot"></textarea>
       </div>
     </fieldset>
+
+    <KisanPaattaminen />
   </section>
 </template>
 

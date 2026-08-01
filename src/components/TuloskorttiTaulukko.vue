@@ -183,7 +183,7 @@ function poistuRuudusta() {
 </script>
 
 <template>
-  <div class="taulukko-kehys">
+  <div class="taulukko-kehys taulukko-kehys--kiinnita">
     <table class="tuloskortti">
       <thead>
         <tr>

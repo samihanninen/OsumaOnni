@@ -130,7 +130,7 @@ function sijaTeksti(sija: number): string {
       Ei tuloksia. <RouterLink :to="{ name: 'syotto', params: { laji } }">Syötä tuloksia</RouterLink>.
     </p>
 
-    <div v-else class="taulukko-kehys">
+    <div v-else class="taulukko-kehys taulukko-kehys--kiinnita">
       <table>
         <thead>
           <tr>

@@ -51,6 +51,26 @@ export const useLaiteStore = defineStore(
       luovutettu.value = false
     }
 
+    /**
+     * Nollaa kisaan liittyvät tiedot mutta säilyttää laitteen tunnisteen ja asetukset.
+     * Käytetään kun sama laite jatkaa seuraavaan kisaan.
+     */
+    function nollaaKisakohtaiset() {
+      viimeinenVienti.value = ''
+      luovutettu.value = false
+    }
+
+    /**
+     * Nollaa myös laitteen tunnisteen ja asetukset. Käytetään kun laite luovutetaan
+     * pois — uusi tunniste estää sen, että laitteen voi yhdistää edelliseen kisaan.
+     */
+    function nollaaLaite() {
+      laiteId.value = uusiId()
+      laiteNimi.value = ''
+      syottotapa.value = 'auto'
+      nollaaKisakohtaiset()
+    }
+
     return {
       laiteId,
       laiteNimi,
@@ -62,6 +82,8 @@ export const useLaiteStore = defineStore(
       merkitseLuovutetuksi,
       jatkaSilti,
       asetaSyottotapa,
+      nollaaKisakohtaiset,
+      nollaaLaite,
     }
   },
   { persist: true },

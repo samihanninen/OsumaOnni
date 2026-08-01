@@ -215,6 +215,40 @@ test.describe('perustoiminnot', () => {
     await expect(page.locator('#nimi')).toHaveValue('Kesäkisa 2026')
   })
 
+  test('kisan tiedot voi poistaa kisan päätyttyä', async ({ page }) => {
+    await avaaKisalla(page, [{ etunimi: 'Sami', sukunimi: 'Hänninen', yhdistys: 'Nupures' }], {
+      polku: '/#/kilpailijat',
+    })
+    await expect(page.getByText('1 kilpailijaa')).toBeVisible()
+
+    await page.goto('/#/kisatiedot')
+    await page.getByRole('button', { name: 'Aloita uusi kisa', exact: true }).click()
+
+    // Ensimmäinen napautus vain kysyy; tietoja ei ole vielä poistettu.
+    await expect(page.getByText(/Poistetaanko 1 kilpailijan tiedot/)).toBeVisible()
+    await page.getByRole('button', { name: 'Kyllä, poista kisan tiedot' }).click()
+    await expect(page.getByText('Kisan tiedot poistettu')).toBeVisible()
+
+    // Tiedot ovat oikeasti poissa, myös uudelleenlatauksen jälkeen.
+    await page.goto('/#/kilpailijat')
+    await expect(page.getByText('Ei vielä kilpailijoita')).toBeVisible()
+    await page.reload()
+    await expect(page.getByText('Ei vielä kilpailijoita')).toBeVisible()
+  })
+
+  test('sivu ei vieri vaakasuunnassa kapeallakaan näytöllä', async ({ page }) => {
+    // Leveä rakennetaulukko saa vierittää omassa kehyksessään, mutta ei koko sivua:
+    // ylivuotava sisältö peittäisi alapuoliset painikkeet.
+    await avaaKisalla(page, [{ etunimi: 'A', sukunimi: 'B', yhdistys: 'C' }], {
+      polku: '/#/kisatiedot',
+    })
+
+    const vaakavieritys = await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+    )
+    expect(vaakavieritys).toBe(false)
+  })
+
   test('lajien rakenne vastaa sääntöjä', async ({ page }) => {
     await avaaTyhjana(page, '/#/kisatiedot')
     const rivit = page.locator('tbody tr')

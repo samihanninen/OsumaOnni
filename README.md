@@ -73,6 +73,22 @@ myös itse poistaa tietoja tilan säästämiseksi.
 automaattisesti: jos vientiä ei ole tehty lainkaan tai siitä on yli 30 minuuttia, sivun
 ylälaidassa näkyy huomautus.
 
+### Kisan päättäminen ja tietojen poistaminen
+
+Kun kisa on ohi, tiedot poistetaan **Kisatiedot**-sivun alaosasta. Vaihtoehtoja on kaksi:
+
+- **Aloita uusi kisa** — poistaa kilpailijat ja tulokset, mutta säilyttää laitteen
+  asetukset. Tämä on tavallinen valinta, kun sama laite jatkaa seuraavaan kisaan.
+- **Poista kaikki tiedot tältä laitteelta** — poistaa lisäksi laitteen nimen ja
+  tunnisteen. Käytä tätä, kun laite ei jää sinulle, esimerkiksi lainatussa puhelimessa.
+
+Molemmat vaativat erillisen vahvistuksen, ja sovellus kertoo ennen poistoa, onko
+tuloksia viety tiedostoon. Poistoa ei voi peruuttaa, joten **vie tulokset ensin** — viety
+Excel-tiedosto on tämän jälkeen ainoa kopio.
+
+Kilpailijoiden nimet ja yhdistykset ovat henkilötietoja, joten niitä ei kannata jättää
+laitteelle kisan jälkeen pidemmäksi aikaa kuin on tarpeen.
+
 ### Asentaminen laitteeseen
 
 Sovellus kannattaa asentaa kotivalikkoon (*Lisää Koti-valikkoon* / *Asenna sovellus*):
