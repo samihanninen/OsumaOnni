@@ -5,10 +5,6 @@ Kaikki tiedot pysyvät **vain omalla laitteellasi** — sovelluksessa ei ole tau
 
 **➡️ Sovellus: https://samihanninen.github.io/OsumaOnni/**
 
-> 🚧 **Kehitys jatkuu.** Sovellus on käytettävissä, mutta usean kirjaajan tulosten
-> yhdistäminen (linkki, QR-koodi ja tiedosto) on vielä työn alla. Muut toiminnot ovat
-> valmiita ja testattuja.
-
 Sovellus on selainversio Nummi-Pusulan Reserviläiset ry:n Excel-tuloskortista.
 Excel-versio vaatii Excel 2021:n tai Microsoft 365:n (`SORTBY`, `FILTER`, `SEQUENCE`),
 sen kilpailijamäärän kasvattaminen vaatii käsityötä, eikä 43 sarakkeen taulukko ole
@@ -145,13 +141,29 @@ lopuksi yhdelle laitteelle — ja sieltä yhteen Excel-tiedostoon.
 | **QR-koodi** | Kirjaaja näyttää koodin, päälaite lukee sen kameralla | **Toimii täysin ilman verkkoyhteyttä** — paras ampumaradalla |
 | **Tiedosto** | Pieni tiedosto AirDropilla, Nearby Sharella tai sähköpostilla | Varmin, ei kokorajaa |
 
+### Kaksi tapaa: vuorottelu ja rinnakkainen kirjaaminen
+
+**Vuorottelu** — kirjaaminen siirtyy laitteelta toiselle. Lähetä *koko kisa*, jolloin
+vastaanottaja jatkaa siitä mihin jäit. Luovuttava laite kannattaa merkitä luovutetuksi:
+sen syöttö lukittuu, jottei sama kisa jatku kahdella laitteella eri suuntiin.
+
+**Rinnakkainen kirjaaminen** — useampi kirjaa yhtä aikaa. Lähetä *vain tulokset*,
+jolloin vastaanottajan omat kirjaukset säilyvät ja tulokset yhdistetään. Kun jokaisella
+on oma osuutensa (esimerkiksi eri laji), ristiriitoja ei synny lainkaan.
+
 ### Ristiriidat
 
 Yhdistäminen ei koskaan ylikirjoita tuloksia huomaamatta. Jos kaksi laitetta on
 kirjannut saman kilpailijan saman sarjan eri tuloksin, sovellus näyttää ne rinnakkain
-ja kysyy kumpi jää voimaan. Tyhjän päälle kirjoitetaan aina huomautuksetta, ja saman
-tuloksen yhdistäminen uudelleen ei muuta mitään — saman koodin voi lukea kahdesti
-turvallisesti.
+pistemäärineen ja kysyy kumpi jää voimaan — mitään ei korvata ennen vahvistusta.
+Tyhjän päälle kirjoitetaan aina huomautuksetta, ja saman tuloksen yhdistäminen
+uudelleen ei muuta mitään: saman koodin voi lukea kahdesti turvallisesti.
+
+Tuomarin merkinnät (sääntörikkeet ja hylkäys) säilyvät ankarampana: niiden katoaminen
+yhdistämisessä olisi pahempi virhe kuin se, että merkintä on molemmilla laitteilla.
+
+Jos suuret tulokset eivät mahdu yhteen QR-koodiin, ne jaetaan numeroituihin osiin. Osat
+voi lukea missä järjestyksessä tahansa, ja sovellus kertoo mitä vielä puuttuu.
 
 > 🔒 **Tietosuojahuomio:** QR-koodi on ainoa tapa, jossa tiedot eivät poistu paikalta.
 > Linkki ja tiedosto kulkevat sen sovelluksen kautta, jolla ne lähetät (esim. WhatsApp).
