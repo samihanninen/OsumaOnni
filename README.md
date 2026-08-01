@@ -197,8 +197,22 @@ uudelleen ei muuta mitään: saman koodin voi lukea kahdesti turvallisesti.
 Tuomarin merkinnät (sääntörikkeet ja hylkäys) säilyvät ankarampana: niiden katoaminen
 yhdistämisessä olisi pahempi virhe kuin se, että merkintä on molemmilla laitteilla.
 
-Jos suuret tulokset eivät mahdu yhteen QR-koodiin, ne jaetaan numeroituihin osiin. Osat
-voi lukea missä järjestyksessä tahansa, ja sovellus kertoo mitä vielä puuttuu.
+### QR-koodien koko
+
+Koodit pidetään tarkoituksella pieninä. QR:n suurin versio vetäisi noin 4300 merkkiä
+yhteen koodiin, mutta se on 177×177 moduulia — puhelimen ruudulla moduuli on silloin pari
+pikseliä, eikä toinen puhelin saa siitä tarkennusta. Siksi tiedot jaetaan noin tuhannen
+merkin paloihin, jotka kamera lukee käytännössä heti.
+
+Käytännössä koko kisa vie:
+
+| Kilpailijoita | QR-koodeja (koko kisa) | QR-koodeja (vain tulokset) |
+|---|---|---|
+| 10 | 2 | 1 |
+| 20 | 2 | 2 |
+| 40 | 4 | 3 |
+
+Osat voi lukea missä järjestyksessä tahansa, ja sovellus kertoo mitä vielä puuttuu.
 
 > 🔒 **Tietosuojahuomio:** QR-koodi on ainoa tapa, jossa tiedot eivät poistu paikalta.
 > Linkki ja tiedosto kulkevat sen sovelluksen kautta, jolla ne lähetät (esim. WhatsApp).

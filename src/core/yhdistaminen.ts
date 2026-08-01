@@ -1,6 +1,6 @@
 import type { Kilpailija, Kisa, Laji, Laukaus, Osallistuminen } from '@/types/kisa'
 import { merkitLaukauksiksi, type SiirtoRivi, type Siirtopaketti } from '@/io/siirto'
-import { LAJIT } from './lajit'
+import { LAJIT, LAJI_KOODIT } from './lajit'
 import { uusiId } from './tunnus'
 
 /**
@@ -263,16 +263,74 @@ export function yhdista(
  * havaitaan. Se on vuorottelun klassinen vahinko: laite lukee vanhan koodin ja pyyhkii
  * juuri kirjatut tulokset. Päätöksen tekee käyttäjä, mutta tieto on annettava.
  */
+/**
+ * Rakentaa kisan täydestä paketista.
+ *
+ * Paketti on tarkoituksella tiivis, jotta se mahtuu QR-koodiin: lajien nimet, kuvaukset
+ * ja etäisyydet täydennetään vastaanottajan omista oletuksista, ja vain rakenteelliset
+ * kentät tulevat mukana.
+ */
+function rakennaKisaPaketista(paketti: Siirtopaketti): Kisa {
+  const lajiMaaritykset = structuredClone(LAJIT)
+  for (const laji of LAJI_KOODIT) {
+    const r = paketti.rakenteet?.[laji]
+    if (r) Object.assign(lajiMaaritykset[laji], r)
+  }
+
+  const kilpailijat: Kilpailija[] = (paketti.kilpailijat ?? []).map((k) => ({
+    id: k.id,
+    etunimi: k.etunimi,
+    sukunimi: k.sukunimi,
+    yhdistys: k.yhdistys,
+    ikasarja: k.ikasarja === 'H50' ? 'H50' : 'H',
+    osallistumiset: {},
+  }))
+
+  const indeksi = new Map(kilpailijat.map((k) => [k.id, k]))
+
+  for (const rivi of paketti.rivit ?? []) {
+    const kilpailija = indeksi.get(rivi.id)
+    if (!kilpailija) continue
+    kilpailija.osallistumiset[rivi.laji] = {
+      luokka: rivi.luokka,
+      kilpasarjat: rivi.sarjat.map((merkit) => ({ laukaukset: merkitLaukauksiksi(merkit) })),
+      rangaistuksia: rivi.rangaistuksia,
+      hylatty: rivi.hylatty,
+      ...(rivi.huom ? { huom: rivi.huom } : {}),
+    }
+  }
+
+  return {
+    schemaVersion: 1,
+    kisaId: paketti.kisaId,
+    kisatiedot: paketti.kisatiedot ?? {
+      nimi: '',
+      jarjestaja: '',
+      paikka: '',
+      pvm: '',
+      kilpailunjohtaja: '',
+      tuomari: '',
+      kirjuri: '',
+      muistiinpanot: '',
+    },
+    asetukset: {
+      laskettavatParhaat: paketti.laskettavatParhaat ?? 3,
+      lajiMaaritykset,
+    },
+    kilpailijat,
+  }
+}
+
 function yhdistaTaysi(oma: Kisa, paketti: Siirtopaketti): YhdistamisTulos {
-  if (!paketti.kisa) {
-    throw new YhdistamisVirhe('Täysi paketti ei sisältänyt kisaa.')
+  if (!paketti.kilpailijat) {
+    throw new YhdistamisVirhe('Täysi paketti ei sisältänyt kilpailijoita.')
   }
 
   const omaVersio = laskeVersio(oma)
   const vanhempi = paketti.versio < omaVersio
 
   return {
-    kisa: kopioi(paketti.kisa),
+    kisa: rakennaKisaPaketista(paketti),
     ristiriidat: [],
     lisatytKilpailijat: [],
     paivitetytSarjat: 0,
@@ -316,11 +374,9 @@ export function kuvaaPaketti(paketti: Siirtopaketti, oma: Kisa): PakettiYhteenve
   const lajit = new Set<Laji>()
   let kilpailijoita = 0
 
-  if (paketti.tyyppi === 'taysi' && paketti.kisa) {
-    kilpailijoita = paketti.kisa.kilpailijat.length
-    for (const k of paketti.kisa.kilpailijat) {
-      for (const laji of Object.keys(k.osallistumiset) as Laji[]) lajit.add(laji)
-    }
+  if (paketti.tyyppi === 'taysi') {
+    kilpailijoita = paketti.kilpailijat?.length ?? 0
+    for (const rivi of paketti.rivit ?? []) lajit.add(rivi.laji)
   } else {
     const idt = new Set<string>()
     for (const rivi of paketti.rivit ?? []) {

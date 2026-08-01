@@ -379,8 +379,9 @@ function laukauksetTekstina(laukaukset: (number | '*' | '-' | null)[]): string {
       <section v-if="laheteValmis" class="kortti lohko">
         <h2>QR-koodi</h2>
         <p v-if="palat.length > 1" class="vihje">
-          Tulokset eivät mahtuneet yhteen koodiin. Näytä kaikki {{ palat.length }} osaa
-          vuorotellen — vastaanottaja voi lukea ne missä järjestyksessä tahansa.
+          Tulokset on jaettu <strong>{{ palat.length }} osaan</strong>. Yksi iso koodi
+          olisi puhelimelle vaikea lukea, joten näytä osat vuorotellen — vastaanottaja voi
+          lukea ne missä järjestyksessä tahansa, ja sovellus kertoo mitä vielä puuttuu.
         </p>
 
         <QrKoodi :teksti="nykyinenPala" />

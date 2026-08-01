@@ -1,5 +1,6 @@
 import { deflate, inflate } from 'pako'
 import { NAPAKYMPPI, OHI, type Kisa, type Laji, type Laukaus, type Luokka } from '@/types/kisa'
+import { LAJI_KOODIT } from '@/core/lajit'
 
 /**
  * Tulosten siirtomuoto laitteiden välillä.
@@ -14,13 +15,27 @@ import { NAPAKYMPPI, OHI, type Kisa, type Laji, type Laukaus, type Luokka } from
  */
 
 /** Muodon versio. Kasvatetaan, jos rakenne muuttuu yhteensopimattomasti. */
-export const SIIRTO_VERSIO = 1
+export const SIIRTO_VERSIO = 2
+
+/** Vanhin muoto, jonka tämä versio osaa lukea. */
+export const VANHIN_TUETTU = 2
 
 /** Tunniste, josta paketti tunnistetaan. */
 export const TUNNISTE = 'OO1'
 
-/** Yhden QR-koodin turvallinen merkkimäärä. Versio 40, virheenkorjaus L. */
-export const QR_MERKKIRAJA = 4200
+/**
+ * Yhden QR-koodin merkkimäärä.
+ *
+ * Tässä ei tavoitella suurinta mahdollista koodia vaan **luettavaa** koodia. QR:n
+ * suurin versio 40 vetää noin 4300 alfanumeerista merkkiä, mutta on 177×177 moduulia:
+ * puhelimen ruudulla yksi moduuli on silloin pari pikseliä, eikä toinen puhelin saa
+ * siitä tarkennusta. Noin 1000 merkkiä vastaa versiota ~15–17 eli reilusti alle sadan
+ * moduulin, jonka kamera lukee käytännössä heti.
+ *
+ * Useampi pieni koodi on siis parempi kuin yksi valtava: paloja voi lukea missä
+ * järjestyksessä tahansa ja sovellus kertoo mitä puuttuu.
+ */
+export const QR_MERKKIRAJA = 1000
 
 // --- Laukausten tiivis esitys ----------------------------------------------
 
@@ -125,6 +140,28 @@ export type PakettiTyyppi =
   /** Vain tulokset. Käytetään rinnakkaisessa kirjaamisessa. */
   | 'osa'
 
+/** Kilpailijan perustiedot täydessä paketissa. Tulokset ovat erikseen `rivit`-listassa. */
+export interface SiirtoKilpailija {
+  id: string
+  etunimi: string
+  sukunimi: string
+  yhdistys: string
+  ikasarja: string
+}
+
+/**
+ * Lajin rakenne siirrossa: vain ne kentät, jotka voivat poiketa oletuksesta.
+ *
+ * Lajien nimet, kuvaukset, aseet ja etäisyydet ovat samoja joka laitteella, joten niiden
+ * lähettäminen olisi pelkkää täytettä — noin 1500 merkkiä eli useamman QR-koodin verran.
+ * Vastaanottaja täydentää loput omista oletuksistaan.
+ */
+export interface TiivisRakenne {
+  kilpasarjoja: number
+  laukauksiaSarjassa: number
+  tulosSaanto: 'paras' | 'summa'
+}
+
 export interface Siirtopaketti {
   v: number
   tyyppi: PakettiTyyppi
@@ -135,9 +172,15 @@ export interface Siirtopaketti {
   laiteNimi?: string
   /** Paketin luontiaika (ISO). */
   aika: string
-  /** Täydessä paketissa koko kisa. */
-  kisa?: Kisa
-  /** Osittaisessa paketissa pelkät tulokset. */
+
+  // --- Vain täydessä paketissa ---
+  kisatiedot?: Kisa['kisatiedot']
+  laskettavatParhaat?: number
+  rakenteet?: Partial<Record<Laji, TiivisRakenne>>
+  /** Koko kilpailijalista, myös ne joilla ei ole vielä osallistumisia. */
+  kilpailijat?: SiirtoKilpailija[]
+
+  /** Tulokset. Molemmissa pakettityypeissä. */
   rivit?: SiirtoRivi[]
 }
 
@@ -182,6 +225,11 @@ export function puraPaketti(data: string): Siirtopaketti {
   if (paketti.v > SIIRTO_VERSIO) {
     throw new SiirtoVirhe(
       `Koodi on tehty uudemmalla sovellusversiolla (muoto ${paketti.v}). Päivitä sovellus.`,
+    )
+  }
+  if (paketti.v < VANHIN_TUETTU) {
+    throw new SiirtoVirhe(
+      'Koodi on tehty vanhemmalla sovellusversiolla. Päivitä molemmat laitteet ja luo koodi uudelleen.',
     )
   }
   if (paketti.tyyppi !== 'taysi' && paketti.tyyppi !== 'osa') {
@@ -364,11 +412,38 @@ export function rakennaOsapaketti(
   }
 }
 
-/** Rakentaa täyden paketin koko kisasta (vuorottelu). */
+/**
+ * Rakentaa täyden paketin koko kisasta (vuorottelu).
+ *
+ * Sisältö pidetään tarkoituksella tiiviinä, koska tämä paketti luetaan QR-koodista:
+ * laukaukset merkkijonoina, lajien rakenteista vain poikkeavat kentät, eikä kilpailijan
+ * nimeä toisteta jokaisella tulosrivillä.
+ */
 export function rakennaTayspaketti(
   kisa: Kisa,
   tunnisteet: { laiteId: string; laiteNimi?: string; versio: number; aika: string },
 ): Siirtopaketti {
+  const rakenteet: Partial<Record<Laji, TiivisRakenne>> = {}
+  for (const laji of LAJI_KOODIT) {
+    const m = kisa.asetukset.lajiMaaritykset[laji]
+    if (!m) continue
+    rakenteet[laji] = {
+      kilpasarjoja: m.kilpasarjoja,
+      laukauksiaSarjassa: m.laukauksiaSarjassa,
+      tulosSaanto: m.tulosSaanto,
+    }
+  }
+
+  const osa = rakennaOsapaketti(kisa, tunnisteet)
+  // Nimet ovat kilpailijalistassa, joten tulosriveillä ne olisivat turhaa toistoa.
+  const rivit = (osa.rivit ?? []).map(({ etunimi, sukunimi, yhdistys, ikasarja, ...rivi }) => {
+    void etunimi
+    void sukunimi
+    void yhdistys
+    void ikasarja
+    return rivi
+  })
+
   return {
     v: SIIRTO_VERSIO,
     tyyppi: 'taysi',
@@ -377,6 +452,16 @@ export function rakennaTayspaketti(
     laiteId: tunnisteet.laiteId,
     ...(tunnisteet.laiteNimi ? { laiteNimi: tunnisteet.laiteNimi } : {}),
     aika: tunnisteet.aika,
-    kisa,
+    kisatiedot: kisa.kisatiedot,
+    laskettavatParhaat: kisa.asetukset.laskettavatParhaat,
+    rakenteet,
+    kilpailijat: kisa.kilpailijat.map((k) => ({
+      id: k.id,
+      etunimi: k.etunimi,
+      sukunimi: k.sukunimi,
+      yhdistys: k.yhdistys,
+      ikasarja: k.ikasarja,
+    })),
+    rivit,
   }
 }

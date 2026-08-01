@@ -5,15 +5,19 @@ import { onMounted, ref, watch } from 'vue'
  * Näyttää yhden QR-koodin.
  *
  * Kirjasto ladataan vasta tarvittaessa, jottei se paina sovelluksen käynnistystä.
- * Virheenkorjaustaso on tarkoituksella matalin mahdollinen (L): se jättää eniten tilaa
- * datalle, ja koodi luetaan tyypillisesti hyvissä oloissa ruudulta ruudulle.
+ *
+ * Virheenkorjaustaso on M eikä L: hyötykuorma on jaettu pieniin paloihin, joten
+ * kapasiteetista ei ole pulaa, ja M sietää selvästi paremmin ruudun heijastuksia ja
+ * puutteellista tarkennusta — juuri niitä, jotka haittaavat lukemista puhelimesta
+ * toiseen.
  */
 const props = withDefaults(
   defineProps<{
     teksti: string
     koko?: number
   }>(),
-  { koko: 320 },
+  // Iso koodi ruudulla = isot moduulit = helpompi tarkennus.
+  { koko: 420 },
 )
 
 const kangas = ref<HTMLCanvasElement | null>(null)
@@ -27,8 +31,9 @@ async function piirra() {
   try {
     const QR = await import('qrcode')
     await QR.toCanvas(el, props.teksti, {
-      errorCorrectionLevel: 'L',
-      margin: 2,
+      errorCorrectionLevel: 'M',
+      // Hiljainen reunus on osa standardia; ilman sitä lukija ei löydä koodin rajoja.
+      margin: 3,
       width: props.koko,
       color: { dark: '#000000ff', light: '#ffffffff' },
     })
@@ -60,11 +65,15 @@ watch(() => [props.teksti, props.koko], piirra)
   gap: 0.5rem;
 }
 .kangas {
-  max-width: 100%;
+  /* Käytetään koko käytettävissä oleva leveys: mitä isommat moduulit, sitä varmempi luku. */
+  width: 100%;
+  max-width: 26rem;
   height: auto;
   background: #fff;
   padding: 0.5rem;
   border-radius: var(--reunapyoristys);
   border: 1px solid var(--vari-reuna);
+  /* Terävät reunat skaalatessa: sumentunut koodi on lukijalle vaikeampi. */
+  image-rendering: pixelated;
 }
 </style>

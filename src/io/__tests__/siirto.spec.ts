@@ -121,8 +121,50 @@ describe('paketin koodaus', () => {
     const purettu = puraPaketti(koodaaPaketti(rakennaTayspaketti(kisa, TUNNISTEET)))
 
     expect(purettu.tyyppi).toBe('taysi')
-    expect(purettu.kisa?.kilpailijat).toHaveLength(2)
-    expect(purettu.kisa?.kisatiedot.nimi).toBe('Testikisa')
+    expect(purettu.kilpailijat).toHaveLength(2)
+    expect(purettu.kisatiedot?.nimi).toBe('Testikisa')
+    // Rakenteista siirtyy vain se, mikä voi poiketa oletuksesta.
+    expect(purettu.rakenteet?.RA2).toEqual({
+      kilpasarjoja: 3,
+      laukauksiaSarjassa: 6,
+      tulosSaanto: 'summa',
+    })
+  })
+
+  it('täysi paketti ei toista lajien vakiotekstejä eikä nimiä tulosriveillä', () => {
+    const kisa = teeKisa(3)
+    const paketti = rakennaTayspaketti(kisa, TUNNISTEET)
+    const json = JSON.stringify(paketti)
+
+    // Lajien kuvaustekstit ovat vastaanottajalla valmiina, joten niitä ei lähetetä.
+    expect(json).not.toContain('Kivääriammunta')
+    expect(json).not.toContain('itselataava')
+    // Nimet ovat kilpailijalistassa, eivät jokaisella tulosrivillä.
+    expect(paketti.rivit?.[0]?.sukunimi).toBeUndefined()
+    expect(paketti.kilpailijat?.[0]?.sukunimi).toBeTruthy()
+  })
+
+  it('täysi paketti on selvästi pienempi kuin koko kisan naiivi sarjallistus', () => {
+    const kisa = teeKisa(40)
+    const paketti = rakennaTayspaketti(kisa, TUNNISTEET)
+    const koodattu = koodaaPaketti(paketti)
+
+    // Vertailukohta: koko kisaolio sellaisenaan pakattuna, kuten aiemmin tehtiin.
+    const naiivi = koodaaPaketti({ ...paketti, kisa } as unknown as typeof paketti)
+
+    // Vähintään neljännes pois, kun vakiotekstit ja toistetut nimet jätetään lähettämättä.
+    expect(koodattu.length).toBeLessThan(naiivi.length * 0.75)
+
+    // Ja ennen kaikkea: muutama luettava koodi yhden lukukelvottoman sijaan.
+    expect(paketoi(paketti).length).toBeLessThanOrEqual(4)
+  })
+
+  it('jokainen pala pysyy luettavan kokoisena', () => {
+    const kisa = teeKisa(40)
+    for (const pala of paketoi(rakennaTayspaketti(kisa, TUNNISTEET))) {
+      // Yli 1000 merkkiä tarkoittaisi jo hankalasti luettavaa koodia.
+      expect(pala.length).toBeLessThanOrEqual(QR_MERKKIRAJA)
+    }
   })
 
   it('koodattu paketti kelpaa QR:n alfanumeeriseen tilaan', () => {
@@ -130,11 +172,12 @@ describe('paketin koodaus', () => {
     expect(koodaaPaketti(rakennaOsapaketti(kisa, TUNNISTEET))).toMatch(QR_ALFANUMEERINEN)
   })
 
-  it('50 kilpailijan osatulos mahtuu yhteen QR-koodiin', () => {
+  it('50 kilpailijan osatulos jaetaan luettaviin paloihin', () => {
     const kisa = teeKisa(50)
     const palat = paketoi(rakennaOsapaketti(kisa, TUNNISTEET))
-    expect(palat).toHaveLength(1)
-    expect(palat[0]!.length).toBeLessThanOrEqual(QR_MERKKIRAJA)
+    // Mieluummin muutama pieni koodi kuin yksi, jota kamera ei saa luettua.
+    expect(palat.length).toBeLessThanOrEqual(4)
+    for (const pala of palat) expect(pala.length).toBeLessThanOrEqual(QR_MERKKIRAJA)
   })
 
   it('pakkaus pienentää hyötykuormaa selvästi', () => {
