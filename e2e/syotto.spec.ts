@@ -224,8 +224,60 @@ test.describe('syöttötavan automaattinen valinta', () => {
     await avaaKisalla(page, AMPUJAT, { polku: '/#/syota/RA1', syottotapa: 'taulukko' })
     await expect(page.locator('table.tuloskortti')).toBeVisible()
 
+    // Syöttötapa on taitettuna, jotta pystytila jää kilpailijakortille.
+    await page.locator('.tapavalinta summary').click()
     await page.getByRole('button', { name: 'Näppäimistö' }).click()
     await expect(page.locator('table.tuloskortti')).toHaveCount(0)
     await expect(page.locator('.nappaimisto')).toBeVisible()
+  })
+})
+
+test.describe('mahtuminen kapealle näytölle', () => {
+  /*
+   * Kapea puhelin on tämän sovelluksen tyypillisin näyttö. Sekä näppäimistön että
+   * QR-koodin on mahduttava siihen: aiemmin siirtymäpainikkeet veivät kaksi riviä ja
+   * työnsivät kilpailijan nimen ruudun ulkopuolelle, ja QR-koodi valui reunojen yli.
+   */
+  test.use({ viewport: { width: 360, height: 660 } })
+
+  test('kilpailijan nimi näkyy näppäimistön kanssa', async ({ page }) => {
+    await avaaKisalla(
+      page,
+      [
+        { etunimi: 'Sami', sukunimi: 'Hänninen', yhdistys: 'Nupures' },
+        { etunimi: 'Aada', sukunimi: 'Ahonen', yhdistys: 'KaRes' },
+      ],
+      { polku: '/#/syota/RA1', syottotapa: 'nappaimisto' },
+    )
+
+    await expect(page.locator('.nimi')).toBeInViewport()
+    // Siirtymäpainikkeet mahtuvat samalle riville.
+    const edellinen = await page.getByRole('button', { name: 'Edellinen kilpailija' }).boundingBox()
+    const seuraava = await page.getByRole('button', { name: 'Seuraava kilpailija' }).boundingBox()
+    expect(edellinen).not.toBeNull()
+    expect(seuraava).not.toBeNull()
+    expect(Math.abs((edellinen?.y ?? 0) - (seuraava?.y ?? 0))).toBeLessThan(4)
+  })
+
+  test('QR-koodi mahtuu ruudulle', async ({ page }) => {
+    await avaaKisalla(page, [{ etunimi: 'Sami', sukunimi: 'Hänninen', yhdistys: 'Nupures' }], {
+      polku: '/#/yhdista',
+    })
+
+    await page.getByRole('button', { name: 'Luo siirtokoodi' }).click()
+    const kangas = page.locator('canvas')
+    await expect(kangas).toBeVisible()
+
+    const laatikko = await kangas.boundingBox()
+    expect(laatikko).not.toBeNull()
+    // Ei ulos vasemmasta reunasta eikä oikeasta.
+    expect(laatikko!.x).toBeGreaterThanOrEqual(0)
+    expect(laatikko!.x + laatikko!.width).toBeLessThanOrEqual(360)
+
+    // Eikä koko sivu saa vieriä vaakasuunnassa.
+    const vaaka = await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+    )
+    expect(vaaka).toBe(false)
   })
 })

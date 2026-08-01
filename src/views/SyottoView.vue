@@ -171,7 +171,12 @@ function taulukkoHylatty(id: string, hylatty: boolean) {
 <template>
   <section class="sivu">
     <header class="ylaosa">
-      <h1>Tulosten syöttö</h1>
+      <!--
+        Otsikko piilotetaan kapealla näytöllä näkyvistä mutta säilytetään ruudunlukijalle:
+        valikossa on jo korostettuna "Syötä tulokset", ja jokainen säästetty pystypikseli
+        näyttää kirjaajalle enemmän siitä kortista, jota hän on täyttämässä.
+      -->
+      <h1 class="otsikko">Tulosten syöttö</h1>
 
       <nav class="lajivalinta" aria-label="Laji">
         <RouterLink
@@ -188,11 +193,9 @@ function taulukkoHylatty(id: string, hylatty: boolean) {
     </header>
 
     <p class="lajitiedot">
-      <strong>{{ maaritys.nimi }}</strong>
-      <span class="erotin" aria-hidden="true">·</span>
       {{ maaritys.kilpasarjoja }} × {{ maaritys.laukauksiaSarjassa }} laukausta
       <span class="erotin" aria-hidden="true">·</span>
-      {{ maaritys.tulosSaanto === 'paras' ? 'parempi sarja huomioidaan' : 'sarjojen summa' }}
+      {{ maaritys.tulosSaanto === 'paras' ? 'parempi sarja' : 'sarjojen summa' }}
     </p>
 
     <p v-if="laite.luovutettu" class="huomio huomio--varoitus">
@@ -207,8 +210,12 @@ function taulukkoHylatty(id: string, hylatty: boolean) {
     </p>
 
     <template v-else>
-      <div class="tapavalinta">
-        <span class="tapa-otsikko">Syöttötapa</span>
+      <!--
+        Syöttötapa on laitekohtainen asetus, joka valitaan kerran — ei jokaisen
+        kilpailijan kohdalla. Se on siksi taitettuna, jotta pystytila jää kortille.
+      -->
+      <details class="tapavalinta">
+        <summary class="tapa-otsikko">Syöttötapa: {{ taulukossa ? 'taulukko' : 'näppäimistö' }}</summary>
         <div class="tapanapit" role="group" aria-label="Syöttötapa">
           <button
             type="button"
@@ -235,7 +242,7 @@ function taulukkoHylatty(id: string, hylatty: boolean) {
             Taulukko
           </button>
         </div>
-      </div>
+      </details>
 
       <!-- Taulukkosyöttö: oikea näppäimistö ja hiiri -->
       <TuloskorttiTaulukko
@@ -329,7 +336,19 @@ function taulukkoHylatty(id: string, hylatty: boolean) {
 
 <style scoped>
 .ylaosa {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+/* Kapealla näytöllä otsikko vain ruudunlukijalle: valikko kertoo jo missä ollaan. */
+@media (max-width: 599px) {
+  .otsikko {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 
 .lajivalinta {
@@ -371,9 +390,9 @@ function taulukkoHylatty(id: string, hylatty: boolean) {
 }
 
 .lajitiedot {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   color: var(--vari-teksti-himmea);
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.5rem;
 }
 .erotin {
   margin: 0 0.35rem;
@@ -387,13 +406,10 @@ function taulukkoHylatty(id: string, hylatty: boolean) {
 }
 
 .tapavalinta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.6rem;
 }
 .tapa-otsikko {
+  cursor: pointer;
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -402,6 +418,7 @@ function taulukkoHylatty(id: string, hylatty: boolean) {
 .tapanapit {
   display: flex;
   gap: 0.25rem;
+  margin-top: 0.4rem;
 }
 .tapanappi {
   min-height: 36px;

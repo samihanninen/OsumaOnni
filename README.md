@@ -262,12 +262,26 @@ npm run type-check  # TypeScript
 npm run build       # tuotantoversio hakemistoon dist/
 npm run preview     # esikatsele tuotantoversiota
 npm run kuvakkeet   # luo sovelluskuvakkeet uudelleen
+npm run kuosi       # luo taustakuosin uudelleen
 ```
 
-Sovelluskuvakkeet piirretään ohjelmallisesti (`scripts/luo-kuvakkeet.mjs`): kuvake on
-ampumataulu eli sisäkkäisiä renkaita, joten se syntyy pikseleittäin ilman
-kuvankäsittelykirjastoa. Näin kuvakkeet ovat toistettavissa eikä projektiin tarvitse
-tuoda binäärejä, joiden alkuperää ei voi tarkistaa.
+Kuvitus piirretään ohjelmallisesti, ei tuoda valmiina tiedostoina:
+
+- `scripts/luo-kuvakkeet.mjs` — sovelluskuvake on ampumataulu eli sisäkkäisiä renkaita,
+  joten se syntyy pikseleittäin ilman kuvankäsittelykirjastoa.
+- `scripts/luo-kuosi.mjs` — M05-tyylinen pikselikuosi taustalle. Kuvio lasketaan ympäri
+  kiertyvästä kohinasta, joten se toistuu saumattomasti.
+
+Näin kaikki kuvitus on toistettavissa ja omaa jälkeä, eikä projektiin tarvitse tuoda
+tiedostoja, joiden alkuperää tai lisenssiä ei voi tarkistaa.
+
+### Ulkoasu ja luettavuus
+
+Värit on otettu M05-maastopuvun sävyistä, mutta taustakuosi pidetään hyvin haaleana
+(vaaleassa teemassa 13 %). Tuloksia kirjataan ulkona kirkkaassa valossa, joten kontrasti
+menee tyylin edelle: tummimmankin kuosilaikun päällä leipätekstin kontrasti on noin 11:1
+eli selvästi yli WCAG AAA -rajan. Jos käyttöjärjestelmässä on valittu suurempi kontrasti
+(`prefers-contrast: more`), taustakuviot piilotetaan kokonaan.
 
 Julkaisu tapahtuu automaattisesti, kun muutokset viedään `main`-haaraan.
 

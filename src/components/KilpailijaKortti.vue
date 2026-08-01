@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, watch } from 'vue'
 import type { Kilpailija, Laji, LajiMaaritys } from '@/types/kisa'
 import { laskeLaji } from '@/core/laskenta'
 import { naytaLaukaus } from '@/core/laukaus'
@@ -32,6 +32,32 @@ function laukaukset(sarja: number) {
 function sarjanNimi(i: number): string {
   return props.maaritys.kilpasarjoja === 1 ? 'Kilpasarja' : `Kilpasarja ${i + 1}`
 }
+
+/** Ruudun tunniste, jotta aktiivinen ruutu voidaan vierittää näkyviin. */
+function ruudunId(sarja: number, laukaus: number): string {
+  return `ruutu-${props.kilpailija.id}-${sarja}-${laukaus}`
+}
+
+/*
+ * Vieritetään aktiivinen ruutu näkyviin aina kun se vaihtuu.
+ *
+ * Näppäimistö on kiinnitetty näytön alalaitaan, joten kapealla puhelimella kortista
+ * näkyy kerrallaan vain osa. Ilman tätä kirjaaja ei näkisi sitä ruutua, jota on
+ * täyttämässä — ja juuri sen näkeminen on koko kortin tarkoitus. `block: 'nearest'`
+ * liikuttaa näkymää mahdollisimman vähän.
+ */
+watch(
+  () => [props.aktiivinenSarja, props.aktiivinenLaukaus, props.kilpailija.id],
+  () => {
+    void nextTick(() => {
+      const el = document.getElementById(
+        ruudunId(props.aktiivinenSarja, props.aktiivinenLaukaus),
+      )
+      el?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    })
+  },
+  { immediate: true },
+)
 </script>
 
 <template>

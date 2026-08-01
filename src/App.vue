@@ -88,28 +88,45 @@ const laji = computed(() => laite.viimeinenLaji || 'RA1')
   display: none;
 }
 
+/*
+ * Välilehdet ovat omia rajattuja painikkeitaan.
+ *
+ * Aiemmin ne olivat pelkkää tekstiä, jossa vain valittu sai alleviivauksen: vierekkäisiä
+ * kohtia oli vaikea erottaa toisistaan, koska mikään ei kertonut mihin yksi loppuu ja
+ * toinen alkaa. Reunus ja tausta tekevät rajat näkyviksi myös kirkkaassa valossa.
+ */
 .valikko a {
   flex: 0 0 auto;
-  padding: 0.5rem 0.75rem;
-  border-bottom: 2px solid transparent;
-  color: var(--vari-teksti-himmea);
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--vari-reuna);
+  border-radius: 999px;
+  background: var(--vari-tausta-korotettu);
+  color: var(--vari-teksti);
   text-decoration: none;
   font-size: 0.95rem;
+  font-weight: 600;
   white-space: nowrap;
+  /* Riittävä kosketuskohde ilman että palkki kasvaa liian korkeaksi. */
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
 }
 .valikko a:hover {
-  color: var(--vari-teksti);
+  border-color: var(--vari-korostus);
 }
 .valikko a.router-link-active {
-  color: var(--vari-korostus);
-  border-bottom-color: var(--vari-korostus);
-  font-weight: 600;
+  background: var(--vari-korostus);
+  border-color: var(--vari-korostus);
+  color: #fff;
 }
 
-/* Tulosten kirjaaminen on sovelluksen pääasia, joten se erottuu muista. */
+/* Tulosten kirjaaminen on sovelluksen pääasia, joten se erottuu myös valitsematta. */
 .valikko-ensisijainen {
-  font-weight: 700;
-  color: var(--vari-korostus) !important;
+  border-color: var(--vari-korostus);
+  color: var(--vari-korostus);
+}
+.valikko-ensisijainen.router-link-active {
+  color: #fff;
 }
 
 .sisalto {

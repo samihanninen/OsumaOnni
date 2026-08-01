@@ -1,16 +1,30 @@
-/* Väripaletti — vaalea ja tumma teema laitteen asetuksen mukaan. */
+/*
+ * Väripaletti — vaalea ja tumma teema laitteen asetuksen mukaan.
+ *
+ * Sävyt on otettu M05-maastopuvun väreistä (sammaleenvihreä, oliivi, hiekka, tummanruskea),
+ * mutta vain **pintoihin ja korostuksiin** — ei tekstin taakse. Kuviollinen tausta on
+ * erillisellä kerroksella hyvin haaleana, ja kaikki luettava teksti on aina yksivärisen
+ * kortin päällä. Kirjaaminen tapahtuu ulkona kirkkaassa valossa, joten kontrasti menee
+ * tyylin edelle.
+ */
 :root {
-  --vari-tausta: #f7f7f8;
-  --vari-tausta-korotettu: #ffffff;
-  --vari-reuna: #dcdce1;
-  --vari-teksti: #1c1c1f;
-  --vari-teksti-himmea: #62626c;
-  --vari-korostus: #1f6f4a;
-  --vari-korostus-himmea: #e6f2eb;
-  --vari-varoitus: #8a5a00;
-  --vari-varoitus-tausta: #fdf5e2;
-  --vari-virhe: #a4232b;
-  --vari-virhe-tausta: #fdeced;
+  --vari-tausta: #eceadf;
+  --vari-tausta-korotettu: #fbfaf6;
+  --vari-reuna: #c9c6b4;
+  --vari-teksti: #1b1d17;
+  --vari-teksti-himmea: #5b5f4f;
+  --vari-korostus: #3c5a34;
+  --vari-korostus-himmea: #dfe6d6;
+  --vari-varoitus: #7a5312;
+  --vari-varoitus-tausta: #f7edd6;
+  --vari-virhe: #96262a;
+  --vari-virhe-tausta: #f8e6e4;
+
+  /* M05-kuosin sävyt taustakuviota varten. */
+  --m05-sammal: #4a5b3a;
+  --m05-oliivi: #6b7248;
+  --m05-hiekka: #b7ab86;
+  --m05-ruskea: #4b3f2f;
 
   --reunapyoristys: 10px;
   --varjo:
@@ -19,17 +33,22 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --vari-tausta: #16171a;
-    --vari-tausta-korotettu: #1f2125;
-    --vari-reuna: #33363c;
-    --vari-teksti: #ececf0;
-    --vari-teksti-himmea: #a0a2ac;
-    --vari-korostus: #58c795;
-    --vari-korostus-himmea: #1c3329;
-    --vari-varoitus: #f0c470;
+    --vari-tausta: #16180f;
+    --vari-tausta-korotettu: #21241a;
+    --vari-reuna: #3d4231;
+    --vari-teksti: #eceee2;
+    --vari-teksti-himmea: #a6ab93;
+    --vari-korostus: #8fc47a;
+    --vari-korostus-himmea: #2b3623;
+    --vari-varoitus: #e8c47a;
     --vari-varoitus-tausta: #33290f;
-    --vari-virhe: #f38b92;
+    --vari-virhe: #f0949a;
     --vari-virhe-tausta: #3a1c1f;
+
+    --m05-sammal: #3d4a30;
+    --m05-oliivi: #545c3a;
+    --m05-hiekka: #6f6a52;
+    --m05-ruskea: #2f2820;
 
     --varjo:
       0 1px 2px rgb(0 0 0 / 40%), 0 2px 8px rgb(0 0 0 / 25%);

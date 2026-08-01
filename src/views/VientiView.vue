@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useKisaStore } from '@/stores/kisa'
 import { useLaiteStore } from '@/stores/laite'
@@ -65,52 +65,94 @@ async function vie() {
 const voiJakaa = jakoKaytettavissa()
 
 /**
- * Jakaa tiedoston laitteen jakovalikkoon, josta se lähtee sähköpostin liitteenä.
+ * Valmiiksi rakennettu tiedosto jakamista varten.
  *
- * Jos selain estää jaon (Safari vaatii kutsun heti käyttäjän eleen jälkeen, eikä
- * tiedoston valmistelu aina mahdu tuohon ikkunaan), ladataan tiedosto sen sijaan,
- * jottei painallus jää tuloksettomaksi.
+ * TÄRKEÄÄ: `navigator.share` vaatii **tuoreen käyttäjän eleen**. Jos painalluksen jälkeen
+ * ensin odotetaan ExcelJS:n latausta ja työkirjan luontia, ele ehtii vanhentua ja selain
+ * estää jaon — jolloin jakovalikko ei aukea lainkaan, vaikka tiedosto syntyy. Siksi
+ * tiedosto rakennetaan valmiiksi taustalla, ja painallus kutsuu jakoa välittömästi ilman
+ * yhtään `await`ia sitä ennen.
  */
-async function jaa() {
-  virhe.value = ''
-  ilmoitus.value = ''
-  vienninTila.value = 'kesken'
+const jaettava = shallowRef<{ tiedosto: File; tavut: ArrayBuffer; nimi: string } | null>(null)
+const valmistellaan = ref(false)
+
+async function valmisteleJaettava() {
+  if (!voiJakaa || store.kilpailijoita === 0) {
+    jaettava.value = null
+    return
+  }
+  valmistellaan.value = true
   try {
     const { vieKisa } = await import('@/io/xlsxVienti')
-    const nyt = new Date()
-    const { tavut, tiedostonimi } = await vieKisa(kisa.value, nyt)
-    const tiedosto = luoTiedosto(tavut, tiedostonimi)
-
-    const luonnos = luonnosTeksti({
-      kisanNimi: kisa.value.kisatiedot.nimi,
-      pvm: kisa.value.kisatiedot.pvm,
-      tiedostonimi,
-      kilpailijoita: store.kilpailijoita,
-    })
-
-    const tulos = await jaaTiedosto(tiedosto, {
-      otsikko: luonnos.aihe,
-      teksti: `${kisa.value.kisatiedot.nimi || 'Reserviläisammunta'} — tulokset`,
-    })
-
-    if (tulos === 'jaettu') {
-      laite.merkitseVienti(nyt.toISOString())
-      ilmoitus.value = 'Tiedosto jaettu.'
-    } else if (tulos === 'peruutettu') {
-      ilmoitus.value = 'Jakaminen peruutettiin. Tiedostoa ei viety.'
-    } else {
-      lataaTiedosto(tavut, tiedostonimi)
-      laite.merkitseVienti(nyt.toISOString())
-      ilmoitus.value =
-        tulos === 'estetty'
-          ? `Selain esti jakamisen, joten tiedosto ${tiedostonimi} ladattiin sen sijaan.`
-          : `Jakaminen ei ole tuettu tällä laitteella. Tiedosto ${tiedostonimi} ladattiin.`
+    const { tavut, tiedostonimi } = await vieKisa(kisa.value, new Date())
+    jaettava.value = {
+      tiedosto: luoTiedosto(tavut, tiedostonimi),
+      tavut,
+      nimi: tiedostonimi,
     }
-  } catch (e) {
-    virhe.value = e instanceof Error ? e.message : 'Jakaminen ei onnistunut.'
+  } catch {
+    // Epäonnistunut esivalmistelu ei ole virhe käyttäjälle: latauspainike toimii yhä.
+    jaettava.value = null
   } finally {
-    vienninTila.value = 'valmis'
+    valmistellaan.value = false
   }
+}
+
+/** Rakennetaan uudelleen, kun tulokset muuttuvat, jottei jaettava tiedosto vanhene. */
+let ajastin: ReturnType<typeof setTimeout> | undefined
+watch(
+  () => JSON.stringify(kisa.value),
+  () => {
+    clearTimeout(ajastin)
+    ajastin = setTimeout(() => void valmisteleJaettava(), 800)
+  },
+)
+
+onMounted(() => void valmisteleJaettava())
+onBeforeUnmount(() => clearTimeout(ajastin))
+
+/**
+ * Avaa laitteen jakovalikon. Ei `await`ia ennen `navigator.share`-kutsua, jotta
+ * käyttäjän ele on yhä voimassa.
+ */
+function jaa() {
+  virhe.value = ''
+  ilmoitus.value = ''
+
+  const valmis = jaettava.value
+  if (!valmis) {
+    // Tiedostoa ei ehditty rakentaa: ladataan sen sijaan, jottei painallus jää tyhjäksi.
+    void vie()
+    return
+  }
+
+  const luonnos = luonnosTeksti({
+    kisanNimi: kisa.value.kisatiedot.nimi,
+    pvm: kisa.value.kisatiedot.pvm,
+    tiedostonimi: valmis.nimi,
+    kilpailijoita: store.kilpailijoita,
+  })
+
+  void jaaTiedosto(valmis.tiedosto, {
+    otsikko: luonnos.aihe,
+    teksti: `${kisa.value.kisatiedot.nimi || 'Reserviläisammunta'} — tulokset`,
+  }).then((tulos) => {
+    if (tulos === 'jaettu') {
+      laite.merkitseVienti(new Date().toISOString())
+      ilmoitus.value = 'Tiedosto jaettu.'
+      return
+    }
+    if (tulos === 'peruutettu') {
+      ilmoitus.value = 'Jakaminen peruutettiin. Tiedostoa ei viety.'
+      return
+    }
+    lataaTiedosto(valmis.tavut, valmis.nimi)
+    laite.merkitseVienti(new Date().toISOString())
+    ilmoitus.value =
+      tulos === 'estetty'
+        ? `Selain esti jakamisen, joten tiedosto ${valmis.nimi} ladattiin sen sijaan.`
+        : `Jakaminen ei ole tuettu tällä laitteella. Tiedosto ${valmis.nimi} ladattiin.`
+  })
 }
 
 /** Avaa sähköpostiluonnoksen. Liite on lisättävä käsin — selain ei voi tehdä sitä. */
@@ -203,10 +245,10 @@ const eriKisa = computed(
           v-if="voiJakaa"
           type="button"
           class="nappi nappi--ensisijainen"
-          :disabled="vienninTila === 'kesken' || store.kilpailijoita === 0"
+          :disabled="valmistellaan || store.kilpailijoita === 0"
           @click="jaa"
         >
-          {{ vienninTila === 'kesken' ? 'Valmistellaan…' : 'Jaa tulokset' }}
+          {{ valmistellaan ? 'Valmistellaan…' : 'Jaa Excel-tiedosto' }}
         </button>
         <button
           type="button"
@@ -224,8 +266,9 @@ const eriKisa = computed(
       </p>
 
       <p v-if="voiJakaa" class="vihje jakovihje">
-        <strong>Jaa tulokset</strong> antaa tiedoston laitteen jakovalikkoon, josta se
-        lähtee sähköpostin liitteenä.
+        <strong>Jaa Excel-tiedosto</strong> avaa puhelimen oman jakovalikon, josta tiedoston
+        voi lähettää suoraan sähköpostilla, WhatsAppilla tai muulla valitsemallasi tavalla
+        — aitona liitetiedostona. Jos laite ei tue jakamista, tiedosto ladataan sen sijaan.
       </p>
       <details v-else class="sahkoposti">
         <summary>Lähettäminen sähköpostilla</summary>

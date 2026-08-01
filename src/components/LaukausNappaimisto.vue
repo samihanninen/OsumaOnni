@@ -27,59 +27,87 @@ function nimi(arvo: Laukaus): string {
 
 <template>
   <div class="nappaimisto" role="group" aria-label="Laukausten syöttö">
-    <button
-      v-for="arvo in NAPPAIMISTON_ARVOT"
-      :key="String(arvo)"
-      type="button"
-      class="nappain"
-      :class="{
-        'nappain--napa': arvo === '*',
-        'nappain--ohi': arvo === '-',
-      }"
-      :disabled="lukittu"
-      :aria-label="nimi(arvo)"
-      @click="emit('syota', arvo)"
-    >
-      {{ naytaLaukaus(arvo) }}
-    </button>
+    <div class="arvot">
+      <button
+        v-for="arvo in NAPPAIMISTON_ARVOT"
+        :key="String(arvo)"
+        type="button"
+        class="nappain"
+        :class="{
+          'nappain--napa': arvo === '*',
+          'nappain--ohi': arvo === '-',
+        }"
+        :disabled="lukittu"
+        :aria-label="nimi(arvo)"
+        @click="emit('syota', arvo)"
+      >
+        {{ naytaLaukaus(arvo) }}
+      </button>
+    </div>
 
-    <button
-      type="button"
-      class="nappain nappain--toiminto"
-      :disabled="lukittu"
-      aria-label="Poista viimeinen"
-      @click="emit('peruuta')"
-    >
-      ⌫
-    </button>
+    <!--
+      Toiminnot omalla rivillään ja matalampina. Aiemmin nämä olivat samassa
+      neliruutuisessa ruudukossa arvonäppäinten kanssa, jolloin ⌫ ja kaksi kahden
+      sarakkeen painiketta eivät mahtuneet riville ja "Seuraava" pakkautui omalle
+      rivilleen. Se vei kilpailijan nimen ja sarjat näytön ulkopuolelle.
+    -->
+    <div class="toiminnot">
+      <button
+        type="button"
+        class="nappain nappain--toiminto nappain--kapea"
+        :disabled="lukittu"
+        aria-label="Poista viimeinen"
+        @click="emit('peruuta')"
+      >
+        ⌫
+      </button>
 
-    <button
-      type="button"
-      class="nappain nappain--toiminto nappain--leveä"
-      aria-label="Edellinen kilpailija"
-      @click="emit('edellinen')"
-    >
-      ‹ Edellinen
-    </button>
+      <button
+        type="button"
+        class="nappain nappain--toiminto"
+        aria-label="Edellinen kilpailija"
+        @click="emit('edellinen')"
+      >
+        ‹ Edellinen
+      </button>
 
-    <button
-      type="button"
-      class="nappain nappain--toiminto nappain--leveä"
-      aria-label="Seuraava kilpailija"
-      @click="emit('seuraava')"
-    >
-      Seuraava ›
-    </button>
+      <button
+        type="button"
+        class="nappain nappain--toiminto"
+        aria-label="Seuraava kilpailija"
+        @click="emit('seuraava')"
+      >
+        Seuraava ›
+      </button>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .nappaimisto {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
   max-width: 26rem;
   margin: 0 auto;
+}
+
+.arvot {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.toiminnot {
+  display: flex;
+  gap: 0.5rem;
+}
+/* Siirtymäpainikkeet jakavat tilan tasan; ⌫ vie vain oman leveytensä. */
+.toiminnot .nappain {
+  flex: 1 1 0;
+}
+.toiminnot .nappain--kapea {
+  flex: 0 0 3.75rem;
 }
 
 .nappain {
@@ -113,12 +141,15 @@ function nimi(arvo: Laukaus): string {
 .nappain--ohi {
   color: var(--vari-teksti-himmea);
 }
+/*
+ * Toimintopainikkeet ovat matalampia kuin arvonäppäimet: niitä painetaan kerran
+ * kilpailijaa kohti, kun arvonäppäimiä painetaan kymmeniä kertoja. Näin syöttökortille
+ * jää enemmän tilaa ja kirjaaja näkee kenen tuloksia on syöttämässä. 44 px on yhä
+ * suositeltu kosketuskohteen vähimmäiskoko.
+ */
 .nappain--toiminto {
-  font-size: 1rem;
+  min-height: 44px;
+  font-size: 0.95rem;
   font-weight: 600;
-}
-.nappain--leveä {
-  grid-column: span 2;
-  min-height: 48px;
 }
 </style>

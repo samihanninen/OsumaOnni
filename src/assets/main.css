@@ -1,35 +1,56 @@
 @import './base.css';
 
 /*
- * Taustakuva: alkuperäinen siluettikuvitus (metsänreuna + ampuja makuuasennossa).
- * Kiinnitetty ja hyvin läpinäkyvä, jottei se haittaa luettavuutta. Piirretään
- * ::before-kerrokseen sisällön alle, jotta läpinäkyvyys ei periydy tekstiin.
+ * Tausta: M05-tyylinen pikselikuosi ja sen päällä siluettikuvitus (metsänreuna ja ampuja
+ * makuuasennossa). Molemmat ovat omaa jälkeä ja syntyvät ohjelmallisesti.
  *
- * Vaihtaaksesi valokuvaan: korvaa url() ja säilytä matala opacity.
+ * Kuosi on tarkoituksella hyvin haalea. Tuloksia kirjataan ulkona kirkkaassa valossa,
+ * ja kaikki luettava on joko yksivärisen kortin päällä tai kuosin haaleimman kohdan
+ * kontrastin sisällä — tyyli ei saa maksaa luettavuutta. Kerrokset piirretään
+ * ::before- ja ::after-pseudoelementteihin sisällön alle, jottei läpinäkyvyys periydy
+ * tekstiin.
  */
-body::before {
+body::before,
+body::after {
   content: '';
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
+}
+
+/* Kuosikerros. */
+body::before {
+  background-image: url('./m05-vaalea.svg');
+  background-repeat: repeat;
+  background-size: 300px 300px;
+  opacity: 0.13;
+}
+
+/* Siluettikerros. */
+body::after {
   background-image: url('./tausta.svg');
   background-repeat: no-repeat;
   background-position: center bottom;
   background-size: min(1400px, 170%) auto;
-  opacity: 0.07;
+  opacity: 0.06;
 }
 
 @media (prefers-color-scheme: dark) {
   body::before {
-    /* Tummalla taustalla siluetti tarvitsee vähän enemmän näkyvyyttä */
-    opacity: 0.1;
+    background-image: url('./m05-tumma.svg');
+    /* Tummalla pohjalla kuosi saa näkyä hieman enemmän. */
+    opacity: 0.22;
+  }
+  body::after {
+    opacity: 0.09;
   }
 }
 
-/* Kunnioita käyttäjän kontrastitoivetta: piilota koriste kokonaan. */
+/* Kunnioita käyttäjän kontrastitoivetta: piilota koristeet kokonaan. */
 @media (prefers-contrast: more) {
-  body::before {
+  body::before,
+  body::after {
     display: none;
   }
 }

@@ -40,10 +40,17 @@ export function tukeeTiedostonJakoa(tiedosto: File): boolean {
   }
 }
 
-/** Onko jakaminen ylipäätään käytettävissä tällä laitteella (tyypillinen xlsx-tiedosto)? */
+/**
+ * Onko jakaminen ylipäätään käytettävissä tällä laitteella?
+ *
+ * Tarkistus on tarkoituksella väljä: pelkkä `navigator.share` riittää. Aiemmin tässä
+ * kokeiltiin `canShare`ia tyhjällä koetiedostolla, mutta osa selaimista hylkää
+ * nollatavuisen tiedoston — jolloin jakopainike jäi piiloon laitteilla, joilla jakaminen
+ * olisi toiminut oikealla tiedostolla mainiosti. Lopullinen tarkistus tehdään vasta
+ * aidolla tiedostolla, ja jos jako ei onnistu, tiedosto ladataan sen sijaan.
+ */
 export function jakoKaytettavissa(): boolean {
-  // Tyhjä koetiedosto riittää tyypin tarkistukseen.
-  return tukeeTiedostonJakoa(luoTiedosto(new ArrayBuffer(0), 'koe.xlsx'))
+  return typeof navigator !== 'undefined' && typeof navigator.share === 'function'
 }
 
 export async function jaaTiedosto(

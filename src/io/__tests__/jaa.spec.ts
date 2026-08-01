@@ -42,33 +42,26 @@ describe('jakotuen tunnistus', () => {
     expect(tukeeTiedostonJakoa(luoTiedosto(new ArrayBuffer(0), 'a.xlsx'))).toBe(false)
   })
 
-  it('canShare ratkaisee tuen', () => {
-    asetaJakotuki(
-      () => true,
-      () => Promise.resolve(),
-    )
+  it('pelkkä navigator.share riittää painikkeen näyttämiseen', () => {
+    // Tunnistus on tarkoituksella väljä: canShare tyhjällä koetiedostolla antoi
+    // vääriä negatiivisia, jolloin jakopainike jäi piiloon toimivilla laitteilla.
+    asetaJakotuki(undefined, () => Promise.resolve())
     expect(jakoKaytettavissa()).toBe(true)
+  })
 
-    asetaJakotuki(
-      () => false,
-      () => Promise.resolve(),
-    )
-    expect(jakoKaytettavissa()).toBe(false)
+  it('canShare ratkaisee yksittäisen tiedoston jakamisen', () => {
+    asetaJakotuki(() => true, () => Promise.resolve())
+    expect(tukeeTiedostonJakoa(luoTiedosto(new ArrayBuffer(4), 'a.xlsx'))).toBe(true)
+
+    asetaJakotuki(() => false, () => Promise.resolve())
+    expect(tukeeTiedostonJakoa(luoTiedosto(new ArrayBuffer(4), 'a.xlsx'))).toBe(false)
   })
 
   it('canSharen poikkeus tulkitaan tuen puutteeksi', () => {
-    asetaJakotuki(
-      () => {
-        throw new Error('ei käy')
-      },
-      () => Promise.resolve(),
-    )
-    expect(jakoKaytettavissa()).toBe(false)
-  })
-
-  it('share ilman canSharea ei riitä', () => {
-    asetaJakotuki(undefined, () => Promise.resolve())
-    expect(jakoKaytettavissa()).toBe(false)
+    asetaJakotuki(() => {
+      throw new Error('ei käy')
+    }, () => Promise.resolve())
+    expect(tukeeTiedostonJakoa(luoTiedosto(new ArrayBuffer(4), 'a.xlsx'))).toBe(false)
   })
 })
 
