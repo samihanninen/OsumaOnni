@@ -1,7 +1,14 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
 import TallennusVaroitus from '@/components/TallennusVaroitus.vue'
 import PaivitysIlmoitus from '@/components/PaivitysIlmoitus.vue'
+import { useLaiteStore } from '@/stores/laite'
+
+const laite = useLaiteStore()
+
+/** Syöttö ja sijoitukset ovat lajikohtaisia: palataan viimeksi käytettyyn lajiin. */
+const laji = computed(() => laite.viimeinenLaji || 'RA1')
 </script>
 
 <template>
@@ -13,12 +20,15 @@ import PaivitysIlmoitus from '@/components/PaivitysIlmoitus.vue'
       <span class="tunnus-nimi">OsumaOnni</span>
     </RouterLink>
 
+    <!-- Järjestys noudattaa kisan kulkua: syöttö ensin, koska sitä käytetään eniten. -->
     <nav class="valikko" aria-label="Päävalikko">
-      <RouterLink to="/kisatiedot">Kisatiedot</RouterLink>
+      <RouterLink :to="`/syota/${laji}`" class="valikko-ensisijainen">Syötä tulokset</RouterLink>
+      <RouterLink :to="`/tulokset/${laji}`">Sijoitukset</RouterLink>
       <RouterLink to="/kilpailijat">Kilpailijat</RouterLink>
       <RouterLink to="/yhdistykset">Yhdistykset</RouterLink>
       <RouterLink to="/yhdista">Yhdistä</RouterLink>
       <RouterLink to="/vienti">Vienti</RouterLink>
+      <RouterLink to="/kisatiedot">Kisatiedot</RouterLink>
     </nav>
   </header>
 
@@ -94,6 +104,12 @@ import PaivitysIlmoitus from '@/components/PaivitysIlmoitus.vue'
   color: var(--vari-korostus);
   border-bottom-color: var(--vari-korostus);
   font-weight: 600;
+}
+
+/* Tulosten kirjaaminen on sovelluksen pääasia, joten se erottuu muista. */
+.valikko-ensisijainen {
+  font-weight: 700;
+  color: var(--vari-korostus) !important;
 }
 
 .sisalto {

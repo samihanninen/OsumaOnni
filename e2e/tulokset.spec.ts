@@ -196,6 +196,59 @@ test.describe('yhdistyskilpailu', () => {
   })
 })
 
+test.describe('löydettävyys', () => {
+  /*
+   * Nämä testit navigoivat VAIN käyttöliittymän kautta, eivät koskaan suoraan
+   * osoitteella. Muut testit menevät suoraan /#/syota/RA1:een, joten ne eivät paljasta
+   * sitä, jos näkymään ei pääse mistään linkistä.
+   */
+  const AMPUJA = [{ etunimi: 'Sami', sukunimi: 'Hänninen', yhdistys: 'Nupures' }]
+
+  test('tulosten syöttöön pääsee valikosta', async ({ page }) => {
+    await avaaKisalla(page, AMPUJA)
+    await page.locator('.valikko a', { hasText: 'Syötä tulokset' }).click()
+    await expect(page.getByRole('heading', { name: 'Tulosten syöttö' })).toBeVisible()
+  })
+
+  test('tulosten syöttöön pääsee etusivulta', async ({ page }) => {
+    await avaaKisalla(page, AMPUJA)
+    await page.locator('.osio', { hasText: 'Syötä tulokset' }).click()
+    await expect(page.getByRole('heading', { name: 'Tulosten syöttö' })).toBeVisible()
+  })
+
+  test('jokaiseen näkymään pääsee valikosta', async ({ page }) => {
+    await avaaKisalla(page, AMPUJA)
+
+    for (const [linkki, otsikko] of [
+      ['Syötä tulokset', 'Tulosten syöttö'],
+      ['Sijoitukset', 'Sijoitukset'],
+      ['Kilpailijat', 'Kilpailijat'],
+      ['Yhdistykset', 'Yhdistys- ja kokonaiskilpailu'],
+      ['Yhdistä', 'Yhdistä tulokset'],
+      ['Vienti', 'Vienti ja tuonti'],
+      ['Kisatiedot', 'Kisatiedot'],
+    ] as [string, string][]) {
+      await page.locator('.valikko a', { hasText: new RegExp(`^${linkki}$`) }).click()
+      await expect(page.getByRole('heading', { name: otsikko, level: 1 })).toBeVisible()
+    }
+  })
+
+  test('valikko palaa siihen lajiin, jota oltiin kirjaamassa', async ({ page }) => {
+    await avaaKisalla(page, [{ ...AMPUJA[0]!, lajit: { RA1: {}, RA3: {} } }])
+
+    await page.locator('.valikko a', { hasText: 'Syötä tulokset' }).click()
+    // Vaihdetaan laji RA3:een ja poistutaan välillä muualle.
+    await page.locator('.lajinappi', { hasText: 'RA3' }).click()
+    await expect(page).toHaveURL(/syota\/RA3/)
+
+    await page.locator('.valikko a', { hasText: 'Kilpailijat' }).click()
+    await page.locator('.valikko a', { hasText: 'Syötä tulokset' }).click()
+
+    // Palataan RA3:een eikä oletuslajiin.
+    await expect(page).toHaveURL(/syota\/RA3/)
+  })
+})
+
 test.describe('perustoiminnot', () => {
   test('etusivu kertoo paikallisesta tallennuksesta', async ({ page }) => {
     await avaaTyhjana(page)

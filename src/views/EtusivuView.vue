@@ -1,24 +1,47 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 
-const osiot = [
+import { computed } from 'vue'
+import { useKisaStore } from '@/stores/kisa'
+import { useLaiteStore } from '@/stores/laite'
+
+const store = useKisaStore()
+const laite = useLaiteStore()
+
+const laji = computed(() => laite.viimeinenLaji || 'RA1')
+
+/** Onko kilpailijoita, eli voiko tuloksia jo kirjata? */
+const voiKirjata = computed(() => store.kilpailijoita > 0)
+
+/* Järjestys noudattaa kisan kulkua. Tulosten kirjaaminen on ensimmäisenä, koska se on
+   se mitä sovelluksella pääasiassa tehdään. */
+const osiot = computed(() => [
   {
-    polku: '/kisatiedot',
-    merkki: '🏆',
-    otsikko: 'Kisatiedot',
-    kuvaus: 'Kisan nimi, paikka, päivämäärä ja vastuuhenkilöt.',
+    polku: `/syota/${laji.value}`,
+    merkki: '🎯',
+    otsikko: 'Syötä tulokset',
+    kuvaus: voiKirjata.value
+      ? 'Kirjaa laukaukset. Puhelimella käytössä on iso näppäimistö.'
+      : 'Lisää ensin kilpailijoita, niin voit aloittaa kirjaamisen.',
+    ensisijainen: true,
+  },
+  {
+    polku: `/tulokset/${laji.value}`,
+    merkki: '🏅',
+    otsikko: 'Sijoitukset',
+    kuvaus: 'Tulokset järjestyksessä luokittain ja ikäsarjoittain.',
   },
   {
     polku: '/kilpailijat',
     merkki: '👥',
     otsikko: 'Kilpailijat',
-    kuvaus: 'Lisää kilpailijat, yhdistykset ja luokat joihin he osallistuvat.',
+    kuvaus: 'Lisää kilpailijat, yhdistykset ja lajit joihin he osallistuvat.',
   },
   {
     polku: '/yhdistykset',
     merkki: '📊',
     otsikko: 'Yhdistyskilpailu',
-    kuvaus: 'Yhdistysten tilanne luokittain ja yhteistuloksena.',
+    kuvaus: 'Yhdistysten tilanne lajeittain ja yhteistuloksena.',
   },
   {
     polku: '/yhdista',
@@ -32,7 +55,13 @@ const osiot = [
     otsikko: 'Vienti ja tuonti',
     kuvaus: 'Tallenna tulokset Excel-tiedostoon tai lue ne takaisin.',
   },
-]
+  {
+    polku: '/kisatiedot',
+    merkki: '🏆',
+    otsikko: 'Kisatiedot',
+    kuvaus: 'Kisan nimi, paikka, vastuuhenkilöt ja kisan päättäminen.',
+  },
+])
 </script>
 
 <template>
@@ -47,7 +76,13 @@ const osiot = [
     </p>
 
     <nav class="osiot" aria-label="Sovelluksen osiot">
-      <RouterLink v-for="osio in osiot" :key="osio.polku" :to="osio.polku" class="kortti osio">
+      <RouterLink
+        v-for="osio in osiot"
+        :key="osio.polku"
+        :to="osio.polku"
+        class="kortti osio"
+        :class="{ 'osio--ensisijainen': osio.ensisijainen }"
+      >
         <span class="osio-merkki" aria-hidden="true">{{ osio.merkki }}</span>
         <span class="osio-teksti">
           <strong>{{ osio.otsikko }}</strong>
@@ -77,6 +112,18 @@ const osiot = [
 }
 .osio:hover {
   border-color: var(--vari-korostus);
+}
+
+/* Kirjaaminen on sovelluksen pääasia: se erottuu ja vie koko rivin leveyden. */
+.osio--ensisijainen {
+  border-color: var(--vari-korostus);
+  border-width: 2px;
+  background: var(--vari-korostus-himmea);
+}
+@media (min-width: 640px) {
+  .osio--ensisijainen {
+    grid-column: 1 / -1;
+  }
 }
 
 .osio-merkki {

@@ -34,6 +34,16 @@ export const useLaiteStore = defineStore(
       syottotapa.value = tapa
     }
 
+    /**
+     * Viimeksi käytetty laji. Valikon linkit palaavat siihen lajiin, jota kirjaaja oli
+     * syöttämässä, eikä aina ensimmäiseen.
+     */
+    const viimeinenLaji = ref('RA1')
+
+    function asetaViimeinenLaji(laji: string) {
+      viimeinenLaji.value = laji
+    }
+
     function nimea(nimi: string) {
       laiteNimi.value = nimi.trim()
     }
@@ -77,6 +87,8 @@ export const useLaiteStore = defineStore(
       viimeinenVienti,
       luovutettu,
       syottotapa,
+      viimeinenLaji,
+      asetaViimeinenLaji,
       nimea,
       merkitseVienti,
       merkitseLuovutetuksi,

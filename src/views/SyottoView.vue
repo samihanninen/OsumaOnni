@@ -77,6 +77,9 @@ watch([laji, () => osallistujat.value.length], () => {
   siirryEnsimmaiseenTyhjaan()
 })
 
+// Muistetaan laji, jotta valikon linkit palaavat siihen mitä oltiin kirjaamassa.
+watch(laji, (uusi) => laite.asetaViimeinenLaji(uusi), { immediate: true })
+
 function valitseRuutu(sarja: number, laukaus: number) {
   aktiivinenSarja.value = sarja
   aktiivinenLaukaus.value = laukaus
