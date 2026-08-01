@@ -71,6 +71,13 @@ export function ristiriidanAvain(kilpailijaId: string, laji: Laji, kilpasarja: n
   return `${kilpailijaId}|${laji}|${kilpasarja}`
 }
 
+/** Kilpailijan tunnistus nimen ja yhdistyksen perusteella, kun tunniste ei täsmää. */
+function nimiAvain(sukunimi: string, etunimi: string, yhdistys: string): string {
+  return [sukunimi, etunimi, yhdistys]
+    .map((osa) => osa.trim().toLocaleLowerCase('fi'))
+    .join('|')
+}
+
 /**
  * Syväkopio kisasta.
  *
@@ -118,14 +125,26 @@ export function yhdista(
 ): YhdistamisTulos {
   const { valinnat, salliEriKisa = false } = optiot
 
-  if (!salliEriKisa && paketti.kisaId !== oma.kisaId) {
-    throw new YhdistamisVirhe(
-      'Koodi kuuluu eri kisaan. Tarkista, että kaikki laitteet käyttävät samaa kisaa.',
-    )
-  }
-
+  /*
+   * Täysi paketti korvaa koko kisan, myös kisatunnuksen — se on luovutuksen koko idea.
+   * Tunnusten vertaaminen ennen korvaamista estäisi luovutuksen juuri siinä tilanteessa,
+   * jota varten se on olemassa: vastaanottajalla ei vielä ole samaa kisaa.
+   */
   if (paketti.tyyppi === 'taysi') {
     return yhdistaTaysi(oma, paketti)
+  }
+
+  /*
+   * Osittaisessa paketissa tunnus tarkistetaan, koska toisen kisan tulosten sulauttaminen
+   * omiin sotkisi tulokset. Tarkistuksen voi ohittaa tietoisesti, jolloin kilpailijat
+   * tunnistetaan nimen ja yhdistyksen perusteella.
+   */
+  if (!salliEriKisa && paketti.kisaId !== oma.kisaId) {
+    throw new YhdistamisVirhe(
+      'Koodi kuuluu eri kisaan. Jos laitteille on perustettu kisa erikseen, lähetä ensin ' +
+        '"koko kisa" toiselle laitteelle — silloin molemmilla on sama kisa ja tulokset ' +
+        'yhdistyvät oikein.',
+    )
   }
 
   const tulos = kopioi(oma)
@@ -136,6 +155,18 @@ export function yhdista(
 
   for (const rivi of paketti.rivit ?? []) {
     let kilpailija = tulos.kilpailijat.find((k) => k.id === rivi.id)
+
+    /*
+     * Jos tunnistetta ei löydy, kokeillaan nimeä ja yhdistystä. Laitteet arpovat omat
+     * tunnisteensa, joten erikseen perustetuissa kisoissa sama henkilö on eri tunnuksella
+     * kummallakin. Ilman tätä yhdistäminen loisi jokaisesta kilpailijasta kaksoiskappaleen.
+     */
+    if (!kilpailija && (rivi.sukunimi || rivi.etunimi)) {
+      const avain = nimiAvain(rivi.sukunimi ?? '', rivi.etunimi ?? '', rivi.yhdistys ?? '')
+      kilpailija = tulos.kilpailijat.find(
+        (k) => nimiAvain(k.sukunimi, k.etunimi, k.yhdistys) === avain,
+      )
+    }
 
     // Tuntematon kilpailija: lisätään, jos paketissa on nimitiedot mukana.
     if (!kilpailija) {

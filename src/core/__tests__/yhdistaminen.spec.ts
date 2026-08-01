@@ -57,18 +57,76 @@ function toinenLaite(alkuperainen: Kisa): { store: ReturnType<typeof useKisaStor
 describe('yhdistäminen — perusteet', () => {
   beforeEach(() => setActivePinia(createPinia()))
 
-  it('eri kisan paketti hylätään', () => {
+  it('eri kisan osittainen paketti hylätään', () => {
     const { kisa } = luoKisa([['A', 'Aaa']])
     const vieras = rakennaOsapaketti({ ...kloonaa(kisa), kisaId: 'ERI' }, TUNNISTEET)
 
     expect(() => yhdista(kisa, vieras)).toThrow(YhdistamisVirhe)
-    expect(() => yhdista(kisa, vieras)).toThrow(/eri kisaan/)
+    // Viestin on kerrottava mitä tehdä, ei vain että jokin on pielessä.
+    expect(() => yhdista(kisa, vieras)).toThrow(/koko kisa/)
   })
 
   it('eri kisan voi silti sallia erikseen', () => {
     const { kisa } = luoKisa([['A', 'Aaa']])
     const vieras = rakennaOsapaketti({ ...kloonaa(kisa), kisaId: 'ERI' }, TUNNISTEET)
     expect(() => yhdista(kisa, vieras, { salliEriKisa: true })).not.toThrow()
+  })
+
+  it('täysi paketti hyväksytään, vaikka kisatunnus poikkeaa', () => {
+    /*
+     * Luovutuksen koko idea on antaa kisa laitteelle, jolla sitä ei vielä ole. Tunnusten
+     * vaatiminen samaksi estäisi sen juuri silloin kun sitä tarvitaan.
+     */
+    const { store, kisa } = luoKisa([['A', 'Aaa']])
+    const id = kisa.kilpailijat[0]!.id
+
+    const b = toinenLaite(kisa)
+    b.store.kisa.kisaId = 'TOINEN'
+    kirjaa(b.store, id, [10, 10, 10])
+    const paketti = rakennaTayspaketti(b.kisa, TUNNISTEET)
+
+    expect(() => yhdista(store.kisa, paketti)).not.toThrow()
+    const tulos = yhdista(store.kisa, paketti)
+    // Vastaanottaja saa myös lähettäjän kisatunnuksen, jotta jatkossa ollaan samassa kisassa.
+    expect(tulos.kisa.kisaId).toBe('TOINEN')
+  })
+
+  it('eri kisasta yhdistettäessä kilpailija tunnistetaan nimen perusteella', () => {
+    const { store } = luoKisa([['Sami', 'Hänninen']])
+
+    // Toinen laite on perustanut oman kisan, joten tunnisteet ovat eri.
+    setActivePinia(createPinia())
+    const toinen = useKisaStore()
+    const k = toinen.lisaaKilpailija({
+      etunimi: 'Sami',
+      sukunimi: 'Hänninen',
+      yhdistys: 'Nupures',
+    })
+    toinen.lisaaOsallistuminen(k.id, 'RA1')
+    kirjaa(toinen, k.id, [9, 9, 9])
+    const paketti = rakennaOsapaketti(toinen.kisa, TUNNISTEET)
+
+    const tulos = yhdista(store.kisa, paketti, { salliEriKisa: true })
+
+    // Sama henkilö, ei kaksoiskappaletta.
+    expect(tulos.kisa.kilpailijat).toHaveLength(1)
+    expect(tulos.lisatytKilpailijat).toHaveLength(0)
+    expect(tulos.kisa.kilpailijat[0]!.osallistumiset.RA1!.kilpasarjat[0]!.laukaukset[0]).toBe(9)
+  })
+
+  it('eri niminen kilpailija lisätään uutena', () => {
+    const { store } = luoKisa([['Sami', 'Hänninen']])
+
+    setActivePinia(createPinia())
+    const toinen = useKisaStore()
+    const k = toinen.lisaaKilpailija({ etunimi: 'Aada', sukunimi: 'Ahonen', yhdistys: 'KaRes' })
+    toinen.lisaaOsallistuminen(k.id, 'RA1')
+    kirjaa(toinen, k.id, [7, 7, 7])
+    const paketti = rakennaOsapaketti(toinen.kisa, TUNNISTEET)
+
+    const tulos = yhdista(store.kisa, paketti, { salliEriKisa: true })
+    expect(tulos.kisa.kilpailijat).toHaveLength(2)
+    expect(tulos.lisatytKilpailijat).toHaveLength(1)
   })
 
   it('ei muuta alkuperäistä kisaa', () => {

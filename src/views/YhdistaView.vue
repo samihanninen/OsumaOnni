@@ -18,7 +18,6 @@ import {
   kuvaaPaketti,
   laskeVersio,
   yhdista,
-  YhdistamisVirhe,
   type Ristiriita,
   type RistiriidanValinta,
 } from '@/core/yhdistaminen'
@@ -178,12 +177,18 @@ async function avaaTiedosto(e: Event) {
   }
 }
 
+/** Käyttäjä on hyväksynyt eri kisasta yhdistämisen. */
+const salliEriKisa = ref(false)
+
 function laskeEsikatselu() {
   const paketti = saapuva.value
   if (!paketti) return
   virhe.value = ''
   try {
-    const tulos = yhdista(kisa.value, paketti, { valinnat: valinnat.value })
+    const tulos = yhdista(kisa.value, paketti, {
+      valinnat: valinnat.value,
+      salliEriKisa: salliEriKisa.value,
+    })
     ristiriidat.value = tulos.ristiriidat
     esikatselu.value = {
       lisatyt: tulos.lisatytKilpailijat.length,
@@ -193,7 +198,13 @@ function laskeEsikatselu() {
     }
   } catch (e) {
     virhe.value = e instanceof Error ? e.message : 'Yhdistäminen ei onnistunut.'
-    if (e instanceof YhdistamisVirhe || e instanceof SiirtoVirhe) saapuva.value = null
+    ristiriidat.value = []
+    esikatselu.value = null
+    /*
+     * Yhdistämisvirheessä paketti säilytetään: käyttäjän on nähtävä mistä paketista on
+     * kyse ja voitava valita ohitus. Vain purkuvirheessä ei ole mitään näytettävää.
+     */
+    if (e instanceof SiirtoVirhe) saapuva.value = null
   }
 }
 
@@ -211,11 +222,21 @@ function valitseKaikki(valinta: RistiriidanValinta) {
 
 const kaikkiRatkaistu = computed(() => ristiriidat.value.length === 0)
 
+/**
+ * Vahvistaminen on mahdollista vasta kun esikatselu on laskettu onnistuneesti eikä
+ * ratkaisemattomia ristiriitoja ole. Ilman esikatselua painike näyttäisi toimivalta,
+ * mutta tuottaisi vain saman virheen uudelleen.
+ */
+const voiVahvistaa = computed(() => esikatselu.value !== null && kaikkiRatkaistu.value)
+
 function vahvista() {
   const paketti = saapuva.value
   if (!paketti) return
   try {
-    const tulos = yhdista(kisa.value, paketti, { valinnat: valinnat.value })
+    const tulos = yhdista(kisa.value, paketti, {
+      valinnat: valinnat.value,
+      salliEriKisa: salliEriKisa.value,
+    })
     store.korvaaKisa(tulos.kisa)
     ilmoitus.value =
       paketti.tyyppi === 'taysi'
@@ -230,7 +251,14 @@ function vahvista() {
   }
 }
 
+/** Käyttäjä hyväksyy eri kisasta yhdistämisen ja laskenta tehdään uudelleen. */
+function hyvaksyEriKisa() {
+  salliEriKisa.value = true
+  laskeEsikatselu()
+}
+
 function tyhjennaVastaanotto() {
+  salliEriKisa.value = false
   keraaja.tyhjenna()
   keraysTila.value = { luettu: 0, maara: 0 }
   saapuva.value = null
@@ -293,24 +321,37 @@ function laukauksetTekstina(laukaukset: (number | '*' | '-' | null)[]): string {
       <section class="kortti lohko">
         <h2>Mitä lähetetään</h2>
 
+        <p class="ero">
+          Ero on siinä, <strong>mitä vastaanottajalle tapahtuu</strong>: koko kisa korvaa
+          hänen tietonsa, vain tulokset sulautetaan niihin.
+        </p>
+
         <label class="valinta">
-          <input v-model="sisalto" type="radio" value="osa" @change="palat = []" />
+          <input v-model="sisalto" type="radio" value="taysi" @change="palat = []" />
           <span>
-            <strong>Vain tulokset</strong>
+            <strong>Koko kisa — aloita tästä</strong>
             <small>
-              Rinnakkainen kirjaaminen: jokainen kirjaa omat osuutensa, ja tulokset kootaan
-              yhteen. Vastaanottajan omat kirjaukset säilyvät.
+              Kilpailijat, asetukset ja tulokset. Vastaanottajan tiedot
+              <strong>korvataan kokonaan</strong>, ja hänen laitteelleen tulee sama kisa
+              kuin sinulla.
+              <br />
+              Käytä tätä kun annat kisan seuraavalle kirjaajalle, ja aina ensimmäisenä kun
+              otat toisen laitteen mukaan.
             </small>
           </span>
         </label>
 
         <label class="valinta">
-          <input v-model="sisalto" type="radio" value="taysi" @change="palat = []" />
+          <input v-model="sisalto" type="radio" value="osa" @change="palat = []" />
           <span>
-            <strong>Koko kisa</strong>
+            <strong>Vain tulokset</strong>
             <small>
-              Vuorottelu: kirjaaminen siirtyy tältä laitteelta seuraavalle.
-              <strong>Korvaa vastaanottajan tiedot kokonaan.</strong>
+              Pelkät laukaukset, ei kilpailijoita eikä asetuksia. Vastaanottajan omat
+              kirjaukset <strong>säilyvät</strong> ja tulokset yhdistetään niihin.
+              <br />
+              Käytä tätä kun useampi kirjaa yhtä aikaa —
+              <strong>edellyttää, että molemmilla on sama kisa</strong> eli koko kisa on
+              lähetetty ensin.
             </small>
           </span>
         </label>
@@ -452,9 +493,30 @@ function laukauksetTekstina(laukaukset: (number | '*' | '-' | null)[]): string {
           </div>
         </dl>
 
-        <p v-if="yhteenveto?.eriKisa" class="huomio huomio--virhe">
-          Koodi kuuluu eri kisaan. Tarkista, että kaikki laitteet käyttävät samaa kisaa.
-        </p>
+        <div v-if="yhteenveto?.eriKisa && saapuva.tyyppi === 'osa'" class="huomio huomio--varoitus">
+          <p>
+            <strong>Koodi kuuluu eri kisaan.</strong>
+            Näin käy, kun molemmille laitteille on perustettu oma kisa. Suositeltu tapa on
+            lähettää ensin <em>koko kisa</em> toiselle laitteelle, jolloin molemmilla on
+            sama kisa ja kilpailijat vastaavat toisiaan.
+          </p>
+          <p v-if="!salliEriKisa" class="ohitus">
+            Voit myös yhdistää silti: kilpailijat tunnistetaan silloin nimen ja yhdistyksen
+            perusteella, ja eri tavalla kirjoitetut nimet päätyvät eri kilpailijoiksi.
+          </p>
+          <button
+            v-if="!salliEriKisa"
+            type="button"
+            class="nappi"
+            @click="hyvaksyEriKisa"
+          >
+            Yhdistä silti
+          </button>
+          <p v-else class="ohitus">
+            <strong>Yhdistetään nimien perusteella.</strong> Tarkista tulos yhdistämisen
+            jälkeen.
+          </p>
+        </div>
 
         <p v-if="esikatselu?.vanhempi" class="huomio huomio--varoitus">
           <strong>Saapuvassa kisassa on vähemmän kirjattuja laukauksia kuin tässä laitteessa.</strong>
@@ -524,7 +586,7 @@ function laukauksetTekstina(laukaukset: (number | '*' | '-' | null)[]): string {
           <button
             type="button"
             class="nappi nappi--ensisijainen"
-            :disabled="!kaikkiRatkaistu"
+            :disabled="!voiVahvistaa"
             @click="vahvista"
           >
             {{ saapuva.tyyppi === 'taysi' ? 'Korvaa tiedot' : 'Yhdistä tulokset' }}
@@ -600,6 +662,14 @@ h3 {
 .valinta small {
   display: block;
   color: var(--vari-teksti-himmea);
+  font-size: 0.85rem;
+}
+.ero {
+  font-size: 0.9rem;
+  margin-bottom: 0.6rem;
+}
+.ohitus {
+  margin: 0.5rem 0;
   font-size: 0.85rem;
 }
 

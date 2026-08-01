@@ -162,10 +162,11 @@ describe('YhdistaView — lähettäminen', () => {
     kirjaa(store, a.id, [9, 9, 9])
 
     const wrapper = await asenna()
-    await wrapper.findAll('input[type="radio"]')[1]!.setValue()
+    // Valitaan arvon perusteella, ei järjestyksen: järjestys voi muuttua.
+    await wrapper.find('input[type="radio"][value="taysi"]').setValue()
     await wrapper.findAll('button').find((b) => b.text() === 'Luo siirtokoodi')!.trigger('click')
 
-    expect(wrapper.text()).toContain('Korvaa vastaanottajan tiedot kokonaan')
+    expect(wrapper.text()).toContain('korvataan kokonaan')
 
     const laite = useLaiteStore()
     expect(laite.luovutettu).toBe(false)
@@ -277,7 +278,7 @@ describe('YhdistaView — vastaanottaminen', () => {
     expect(store.kilpailija(b.id)!.osallistumiset.RA1!.kilpasarjat[0]!.laukaukset[0]).toBe(7)
   })
 
-  it('eri kisan koodi torjutaan selkeällä viestillä', async () => {
+  it('eri kisan koodi kertoo mitä tehdä ja tarjoaa ohituksen', async () => {
     const { store } = perustaKisa()
     const vieras = { ...kloonaa(store.kisa), kisaId: 'ERIKISA' }
     const palat = paketoi(
@@ -291,7 +292,42 @@ describe('YhdistaView — vastaanottaminen', () => {
     const wrapper = await asenna()
     await liita(wrapper, palat)
 
-    expect(wrapper.text()).toContain('eri kisaan')
+    expect(wrapper.text()).toContain('Koodi kuuluu eri kisaan')
+    // Ohje kertoo ratkaisun, ei pelkkää vikaa.
+    expect(wrapper.text()).toContain('koko kisa')
+
+    // Ohitus on tarjolla ja tekee yhdistämisestä mahdollisen.
+    const ohita = wrapper.findAll('button').find((b) => b.text() === 'Yhdistä silti')!
+    expect(ohita).toBeDefined()
+    await ohita.trigger('click')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Yhdistä tulokset')).toBe(true)
+  })
+
+  it('koko kisan voi vastaanottaa, vaikka kisatunnus poikkeaa', async () => {
+    // Tämä on luovutuksen tavallisin tilanne: vastaanottajalla on oma tyhjä kisa.
+    const { store, a } = perustaKisa()
+    const vieras = { ...kloonaa(store.kisa), kisaId: 'TOINENKISA' }
+    const palat = paketoi(
+      rakennaTayspaketti(vieras, {
+        laiteId: 'x',
+        laiteNimi: 'Koje 2',
+        versio: 3,
+        aika: '2026-06-15T12:00:00.000Z',
+      }),
+    )
+
+    const wrapper = await asenna()
+    await liita(wrapper, palat)
+
+    // Ei virhettä, vaan tavallinen vahvistus.
+    expect(wrapper.text()).not.toContain('Koodi kuuluu eri kisaan')
+    expect(wrapper.text()).toContain('Koko kisa korvaa tämän laitteen tiedot')
+
+    await wrapper.findAll('button').find((b) => b.text() === 'Korvaa tiedot')!.trigger('click')
+    expect(store.kisa.kisaId).toBe('TOINENKISA')
+    expect(store.kilpailija(a.id)).toBeDefined()
   })
 
   it('roskakoodi ei kaada näkymää', async () => {

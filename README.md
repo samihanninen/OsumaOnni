@@ -157,15 +157,34 @@ lopuksi yhdelle laitteelle — ja sieltä yhteen Excel-tiedostoon.
 | **QR-koodi** | Kirjaaja näyttää koodin, päälaite lukee sen kameralla | **Toimii täysin ilman verkkoyhteyttä** — paras ampumaradalla |
 | **Tiedosto** | Pieni tiedosto AirDropilla, Nearby Sharella tai sähköpostilla | Varmin, ei kokorajaa |
 
-### Kaksi tapaa: vuorottelu ja rinnakkainen kirjaaminen
+### Koko kisa vai vain tulokset?
+
+Ero on siinä, **mitä vastaanottajalle tapahtuu**.
+
+| | Koko kisa | Vain tulokset |
+|---|---|---|
+| Sisältö | Kilpailijat, asetukset ja tulokset | Pelkät laukaukset |
+| Vastaanottajan tiedot | **Korvataan kokonaan** | **Säilyvät**, tulokset yhdistetään niihin |
+| Käyttötarkoitus | Kisan antaminen seuraavalle kirjaajalle | Usean kirjaajan tulosten kokoaminen |
+
+> ⚠️ **Aloita aina lähettämällä koko kisa.** Jokainen laite arpoo käynnistyessään oman
+> kisatunnuksensa. Jos molemmille laitteille perustetaan kisa erikseen, ne ovat
+> sovelluksen silmissä eri kisoja eivätkä pelkät tulokset osaa kohdistua oikeisiin
+> kilpailijoihin. Kun koko kisa on kertaalleen lähetetty, molemmilla on sama kisa ja
+> tulosten yhdistäminen toimii kumpaankin suuntaan.
 
 **Vuorottelu** — kirjaaminen siirtyy laitteelta toiselle. Lähetä *koko kisa*, jolloin
 vastaanottaja jatkaa siitä mihin jäit. Luovuttava laite kannattaa merkitä luovutetuksi:
 sen syöttö lukittuu, jottei sama kisa jatku kahdella laitteella eri suuntiin.
 
-**Rinnakkainen kirjaaminen** — useampi kirjaa yhtä aikaa. Lähetä *vain tulokset*,
-jolloin vastaanottajan omat kirjaukset säilyvät ja tulokset yhdistetään. Kun jokaisella
-on oma osuutensa (esimerkiksi eri laji), ristiriitoja ei synny lainkaan.
+**Rinnakkainen kirjaaminen** — useampi kirjaa yhtä aikaa. Lähetä ensin *koko kisa*
+kaikille laitteille, ja sen jälkeen *vain tulokset* takaisin päälaitteelle. Kun
+jokaisella on oma osuutensa (esimerkiksi eri laji), ristiriitoja ei synny lainkaan.
+
+Jos kisat on jo vahingossa perustettu erikseen, tulokset voi silti yhdistää: sovellus
+tarjoaa *Yhdistä silti* -vaihtoehdon, jolloin kilpailijat tunnistetaan nimen ja
+yhdistyksen perusteella. Eri tavalla kirjoitetut nimet päätyvät silloin eri
+kilpailijoiksi, joten tulos kannattaa tarkistaa.
 
 ### Ristiriidat
 
