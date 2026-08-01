@@ -50,6 +50,14 @@ export default defineConfig({
         // ExcelJS on iso mutta tarvitaan viennissä myös ilman verkkoa.
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        /*
+         * Vanhat välimuistit siivotaan, jottei laitteelle jää viittauksia lohkoihin,
+         * joita ei enää ole palvelimella. Sellainen tila estäisi näkymien latautumisen
+         * kokonaan — linkit näyttäisivät toimimattomilta.
+         */
+        cleanupOutdatedCaches: true,
+        // Hash-reititys tarkoittaa, että kaikki osoitteet tarjoillaan index.html:stä.
+        navigateFallback: 'index.html',
       },
     }),
   ],

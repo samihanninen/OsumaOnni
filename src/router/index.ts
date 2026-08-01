@@ -65,4 +65,47 @@ const router = createRouter({
   ],
 })
 
+/**
+ * Palautuminen vanhentuneesta välimuistista.
+ *
+ * Näkymät ladataan dynaamisesti, ja jokainen julkaisu tuottaa uudet tiedostonimet. Jos
+ * laitteessa on vanha service worker tai välimuistissa vanha index.html, se yrittää
+ * hakea lohkoa jota ei enää ole. Vue Router hylkää silloin siirtymän hiljaisesti:
+ * käyttäjälle se näyttää siltä, että linkit eivät toimi lainkaan.
+ *
+ * Ladataan tällöin sivu kertaalleen uudelleen, jolloin uusin versio haetaan
+ * palvelimelta. Merkintä pidetään sessionStoragessa, jottei synny loputonta silmukkaa
+ * silloin kun vika on jokin muu.
+ */
+const LATAUSMERKINTA = 'osumaonni-lohkolataus'
+
+/** Onko virhe lohkotiedoston latausvirhe? Selaimet sanovat sen eri tavoin. */
+export function onLohkonLatausVirhe(virhe: unknown): boolean {
+  const viesti = virhe instanceof Error ? `${virhe.name}: ${virhe.message}` : String(virhe)
+  return /dynamically imported module|Importing a module script failed|error loading dynamically|ChunkLoadError|Failed to fetch dynamically/i.test(
+    viesti,
+  )
+}
+
+router.onError((virhe, kohde) => {
+  if (!onLohkonLatausVirhe(virhe)) return
+  try {
+    if (sessionStorage.getItem(LATAUSMERKINTA)) return
+    sessionStorage.setItem(LATAUSMERKINTA, '1')
+  } catch {
+    return // yksityinen selaus: ei yritetä uudelleen
+  }
+  // Siirrytään haluttuun osoitteeseen ja haetaan sovellus uudelleen palvelimelta.
+  window.location.hash = `#${kohde.fullPath}`
+  window.location.reload()
+})
+
+router.afterEach(() => {
+  try {
+    sessionStorage.removeItem(LATAUSMERKINTA)
+  } catch {
+    // ei väliä
+  }
+})
+
 export default router
