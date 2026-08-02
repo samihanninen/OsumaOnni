@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
 import ExcelJS from 'exceljs'
-import { avaaKisalla, napautaMonta } from './apurit'
+import { avaaKisalla, napautaMonta, siirry } from './apurit'
 
 /**
  * Vienti ja tuonti oikeassa selaimessa.
@@ -22,7 +22,7 @@ test('vienti lataa Excel-tiedoston', async ({ page }) => {
   // Kirjataan tuloksia, jotta tiedostossa on jotain.
   await napautaMonta(page, '9', 10)
 
-  await page.goto('/#/vienti')
+  await siirry(page, '/#/vienti')
   const lataus = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Lataa tiedosto' }).click()
   const tiedosto = await lataus
@@ -53,34 +53,59 @@ test('viennin jälkeen muistutus katoaa', async ({ page }) => {
   await expect(page.locator('.huomio.ilmoitus')).toContainText('ladattu')
 })
 
-/** Tukeeko selain tiedostojen jakamista? Käytännössä tosi vain mobiiliselaimissa. */
-async function tukeeJakoa(page: import('@playwright/test').Page) {
-  return page.evaluate(() => {
-    const n = navigator as Navigator & { canShare?: (d?: ShareData) => boolean }
-    if (typeof n.canShare !== 'function' || typeof navigator.share !== 'function') return false
-    try {
-      return n.canShare({ files: [new File([], 'koe.xlsx')] })
-    } catch {
-      return false
+/**
+ * Aseta Web Share -tuki päälle tai pois.
+ *
+ * Tuki matkitaan tarkoituksella sen sijaan, että kysyttäisiin selaimelta. Aiemmin testi
+ * ohitti itsensä, jos selain ei tukenut jakamista — CI:n selaimissa tuki puuttuu, joten
+ * jakopainiketta ei koskaan testattu missään ajossa. Painikkeen teksti ehti sen turvin
+ * muuttua ilman että yksikään testi huomasi. Nyt molemmat haarat ajetaan joka selaimella.
+ *
+ * Kutsu tämä ennen sivun avaamista, koska skripti ajetaan sivun omaa koodia ennen.
+ */
+async function asetaJakotuki(page: import('@playwright/test').Page, tuettu: boolean) {
+  await page.addInitScript((paalle) => {
+    const jaot: string[][] = []
+    ;(window as unknown as { __jaot: string[][] }).__jaot = jaot
+
+    const maarita = (nimi: string, arvo: unknown) =>
+      Object.defineProperty(navigator, nimi, { value: arvo, configurable: true, writable: true })
+
+    if (!paalle) {
+      maarita('share', undefined)
+      maarita('canShare', undefined)
+      return
     }
-  })
+    maarita('share', (data: ShareData) => {
+      jaot.push((data.files ?? []).map((t) => t.name))
+      return Promise.resolve()
+    })
+    maarita('canShare', () => true)
+  }, tuettu)
 }
 
-// Kaksi erillistä testiä, jotta ohitettu tapaus näkyy raportissa. Jokin näistä poluista
-// on aina tarjolla — muuten tulosten lähettäminen jäisi käyttäjän keksimisen varaan.
+// Kaksi erillistä testiä, koska sovellus tarjoaa eri polun tuen mukaan. Jokin niistä on
+// aina tarjolla — muuten tulosten lähettäminen jäisi käyttäjän keksimisen varaan.
 
-test('jakotuen kanssa tarjotaan jakopainike', async ({ page }) => {
+test('jakotuen kanssa jakopainike antaa tiedoston laitteen jakovalikkoon', async ({ page }) => {
+  await asetaJakotuki(page, true)
   await avaaKisalla(page, AMPUJAT, { polku: '/#/vienti' })
-  test.skip(!(await tukeeJakoa(page)), 'Selain ei tue tiedostojen jakamista')
 
-  await expect(page.getByRole('button', { name: 'Jaa tulokset' })).toBeVisible()
-  await expect(page.getByText(/laitteen jakovalikkoon/)).toBeVisible()
+  await expect(page.getByText(/oman jakovalikon/)).toBeVisible()
+  await page.getByRole('button', { name: 'Jaa Excel-tiedosto' }).click()
+
+  // Olennaista on, että jaettavaksi menee valmis .xlsx eikä tyhjä kutsu.
+  await expect(page.locator('.huomio.ilmoitus')).toContainText('Tiedosto jaettu')
+  const jaot = await page.evaluate(() => (window as unknown as { __jaot: string[][] }).__jaot)
+  expect(jaot).toHaveLength(1)
+  expect(jaot[0]?.[0]).toMatch(/^selaintestikisa-\d{4}-\d{2}-\d{2}\.xlsx$/)
 })
 
 test('ilman jakotukea tarjotaan sähköpostiluonnos', async ({ page }) => {
+  await asetaJakotuki(page, false)
   await avaaKisalla(page, AMPUJAT, { polku: '/#/vienti' })
-  test.skip(await tukeeJakoa(page), 'Selain tukee jakamista')
 
+  await expect(page.getByRole('button', { name: 'Jaa Excel-tiedosto' })).toHaveCount(0)
   const sahkoposti = page.getByText('Lähettäminen sähköpostilla')
   await expect(sahkoposti).toBeVisible()
   await sahkoposti.click()
@@ -96,7 +121,7 @@ test('kierros: vie, tyhjennä muisti, tuo takaisin', async ({ page }) => {
   await napautaMonta(page, '★', 10)
   await expect(page.locator('.sarja').first().locator('.sarja-summa strong')).toHaveText('100')
 
-  await page.goto('/#/vienti')
+  await siirry(page, '/#/vienti')
   const lataus = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Lataa tiedosto' }).click()
   const polku = await (await lataus).path()
@@ -110,11 +135,11 @@ test('kierros: vie, tyhjennä muisti, tuo takaisin', async ({ page }) => {
 
   // Vientisivu kertoo tyhjästä tilasta: vienti ei aktivoidu ilman kilpailijoita.
   await expect(page.getByText('Lisää ensin kilpailijoita')).toBeVisible()
-  await page.goto('/#/kilpailijat')
+  await siirry(page, '/#/kilpailijat')
   await expect(page.getByText('Ei vielä kilpailijoita')).toBeVisible()
 
   // Tuodaan tiedosto takaisin.
-  await page.goto('/#/vienti')
+  await siirry(page, '/#/vienti')
   await page.locator('input[type="file"]').setInputFiles(polku)
 
   // Esikatselu kertoo mitä ollaan tuomassa, ennen kuin mitään korvataan.
@@ -125,7 +150,7 @@ test('kierros: vie, tyhjennä muisti, tuo takaisin', async ({ page }) => {
   await expect(page.getByText(/Tulokset tuotu: 2 kilpailijaa/)).toBeVisible()
 
   // Tulos on palautunut sellaisenaan.
-  await page.goto('/#/tulokset/RA1')
+  await siirry(page, '/#/tulokset/RA1')
   const rivi = page.locator('tbody tr').first()
   await expect(rivi).toContainText('Ahonen')
   await expect(rivi.locator('.tulos')).toContainText('100')
@@ -138,7 +163,7 @@ test('käsin korjattu laukaus menee tuonnissa läpi', async ({ page }) => {
   await ruudut.first().click()
   for (let i = 0; i < 10; i++) await page.keyboard.press('5')
 
-  await page.goto('/#/vienti')
+  await siirry(page, '/#/vienti')
   const lataus = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Lataa tiedosto' }).click()
   const polku = await (await lataus).path()
@@ -164,7 +189,7 @@ test('käsin korjattu laukaus menee tuonnissa läpi', async ({ page }) => {
   await page.getByRole('button', { name: 'Korvaa tulokset' }).click()
 
   // Korjaus näkyy: 10 × 10 = 100 aiemman 50:n sijaan.
-  await page.goto('/#/tulokset/RA1')
+  await siirry(page, '/#/tulokset/RA1')
   const rivi = page.locator('tbody tr').first()
   await expect(rivi).toContainText('Ahonen')
   await expect(rivi.locator('.tulos')).toContainText('100')
@@ -182,6 +207,6 @@ test('kelvoton tiedosto antaa selkeän virheen eikä hukkaa tuloksia', async ({ 
   await expect(page.locator('.huomio--virhe')).toBeVisible()
   // Nykyiset tulokset ovat edelleen tallessa.
   await expect(page.getByText('Kilpailijoita')).toBeVisible()
-  await page.goto('/#/kilpailijat')
+  await siirry(page, '/#/kilpailijat')
   await expect(page.getByText('2 kilpailijaa')).toBeVisible()
 })

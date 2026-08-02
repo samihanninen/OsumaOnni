@@ -3,7 +3,10 @@
 Selaimessa toimiva tuloskortti- ja tuloslaskentasovellus reserviläisammuntaan.
 Kaikki tiedot pysyvät **vain omalla laitteellasi** — sovelluksessa ei ole taustapalvelinta.
 
-**➡️ Sovellus: https://samihanninen.github.io/OsumaOnni/**
+**➡️ Sovellus: https://samihanninen.github.io/osumaonni/**
+
+Osoite on kokonaan pienellä. GitHub Pages tarjoilee polun kirjainkoolle tarkasti,
+joten `/OsumaOnni/` ei toimi — pelkkä pieni kirjoitusasu on helpompi sanella radalla.
 
 Sovellus on selainversio Nummi-Pusulan Reserviläiset ry:n Excel-tuloskortista.
 Excel-versio vaatii Excel 2021:n tai Microsoft 365:n (`SORTBY`, `FILTER`, `SEQUENCE`),
@@ -99,6 +102,12 @@ Sovellus kannattaa asentaa kotivalikkoon (*Lisää Koti-valikkoon* / *Asenna sov
 
 Päivitykset eivät asennu itsestään kesken kisan: uudesta versiosta tulee ilmoitus, ja
 päivityksen ajankohdan valitset itse. Kirjatut tulokset säilyvät päivityksessä.
+
+> **Jos asensit sovelluksen ennen osoitteen muuttumista pieniksi kirjaimiksi:** poista vanha
+> kuvake kotivalikosta ja asenna sovellus uudelleen yllä olevasta osoitteesta. Vanha
+> asennus jää muuten pyörittämään vanhaa versiota, koska se ei enää löydä päivityksiä.
+> **Kirjatut tulokset säilyvät**: ne on sidottu verkkotunnukseen `samihanninen.github.io`,
+> ei osoitteen polkuun, joten uusi asennus näkee samat tulokset.
 
 ---
 
@@ -346,4 +355,4 @@ Lisenssin täydet ehdot suomeksi: https://creativecommons.org/licenses/by-sa/4.0
 
 ## Palaute
 
-Palaute ja parannusideat: [GitHub Issues](https://github.com/samihanninen/OsumaOnni/issues)
+Palaute ja parannusideat: [GitHub Issues](https://github.com/samihanninen/osumaonni/issues)

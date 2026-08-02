@@ -34,12 +34,12 @@ export default defineConfig({
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
     actionTimeout: 0,
     /*
-     * Base URL. Polun on sisällettävä `/OsumaOnni/`, koska sovellus julkaistaan GitHub
+     * Base URL. Polun on sisällettävä `/osumaonni/`, koska sovellus julkaistaan GitHub
      * Pagesin alihakemistoon ja Vite tarjoilee sen samasta polusta myös paikallisesti.
      */
     baseURL: process.env.CI
-      ? 'http://localhost:4173/OsumaOnni/'
-      : 'http://localhost:5173/OsumaOnni/',
+      ? 'http://localhost:4173/osumaonni/'
+      : 'http://localhost:5173/osumaonni/',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',

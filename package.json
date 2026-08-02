@@ -7,7 +7,7 @@
   "license": "CC-BY-SA-4.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/samihanninen/OsumaOnni.git"
+    "url": "git+https://github.com/samihanninen/osumaonni.git"
   },
   "scripts": {
     "dev": "vite",

@@ -7,9 +7,15 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
-  // Served from https://samihanninen.github.io/OsumaOnni/ — the trailing slash
-  // matters, and the path is case-sensitive on GitHub Pages.
-  base: '/OsumaOnni/',
+  /*
+   * Served from https://samihanninen.github.io/osumaonni/ — the trailing slash matters.
+   *
+   * Kaikki pienellä tarkoituksella: GitHub Pages tarjoilee polun kirjainkoolle tarkasti
+   * (vain repon nimen kirjoitusasu vastaa, muut antavat 404), eikä sitä voi asetuksella
+   * muuttaa. Puhelimessa käsin kirjoitettava osoite on siksi kokonaan pienellä. Repon
+   * nimen on vastattava tätä polkua kirjaimelleen.
+   */
+  base: '/osumaonni/',
   plugins: [
     vue(),
     vueDevTools(),

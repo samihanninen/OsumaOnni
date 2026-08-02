@@ -136,12 +136,35 @@ export async function avaaKisalla(
     [JSON.stringify(kisa), JSON.stringify(laite)],
   )
 
-  await page.goto(optiot.polku ?? '/')
+  await siirry(page, optiot.polku ?? '/')
 }
 
 /** Avaa sovelluksen tyhjänä. */
 export async function avaaTyhjana(page: Page, polku = '/') {
-  await page.goto(polku)
+  await siirry(page, polku)
+}
+
+/**
+ * Siirry sovelluksen sisäiseen osoitteeseen. Käytä tätä aina `page.goto`n sijaan.
+ *
+ * Polku kirjoitetaan sovelluksen juuresta (`/#/vienti`), mutta alkava vinoviiva on
+ * poistettava ennen `page.goto`a. Playwright ratkaisee osoitteen `new URL(polku, baseURL)`
+ * -säännöillä, joissa alkava vinoviiva pyyhkii `baseURL`:n polkuosan `/osumaonni/` pois —
+ * testi menisi palvelimen juureen. Vite ohjaa juuren takaisin base-polkuun, ja juuri se
+ * uudelleenohjaus keskeyttää käynnissä olevan navigoinnin: Playwright kaatuu virheeseen
+ * "interrupted by another navigation", ja sovellus kirjaa reitittimen virheen R0011.
+ * Ajoituksesta riippuen vika osuu satunnaisesti, joten se on syytä estää keskitetysti.
+ *
+ * Toinen ansa on navigointi osoitteeseen, jossa jo ollaan. Hash-reitityksessä se on saman
+ * dokumentin navigointi, jonka WebKit keskeyttää edelliseen: "interrupted by another
+ * navigation" — sama osoite molemmin puolin. Koska kutsun tarkoitus on *varmistaa* oikea
+ * näkymä eikä ladata sivua uudelleen, jo perillä oleva tapaus ohitetaan. Uudelleenlataus
+ * pyydetään aina erikseen `page.reload()`illa.
+ */
+export async function siirry(page: Page, polku: string) {
+  const suhteellinen = polku.replace(/^\/+/, '') || './'
+  if (suhteellinen !== './' && page.url().endsWith(suhteellinen)) return
+  await page.goto(suhteellinen)
 }
 
 /** Näppäimistön arvonäppäin näkyvän tekstin perusteella. */

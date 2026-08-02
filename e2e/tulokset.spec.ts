@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { avaaKisalla, avaaTyhjana, napautaMonta } from './apurit'
+import { avaaKisalla, avaaTyhjana, napautaMonta, siirry } from './apurit'
 
 /** Kilpailijoiden hallinta ja tuloslistat oikeassa selaimessa. */
 
@@ -87,7 +87,7 @@ test.describe('sijoitukset', () => {
    * napautukset voivat osua vielä edelliseen kilpailijaan, mikä tekee testistä satunnaisen.
    */
   async function kirjaa(page: import('@playwright/test').Page, indeksi: number, arvo: string) {
-    await page.goto('/#/syota/RA1')
+    await siirry(page, '/#/syota/RA1')
     await page.locator('#kilpailijavalinta').selectOption(String(indeksi))
     await expect(page.locator('.laskuri')).toContainText(`${indeksi + 1} /`)
 
@@ -103,7 +103,7 @@ test.describe('sijoitukset', () => {
     await kirjaa(page, 1, '9') // Hänninen, vakio → 90
     await kirjaa(page, 2, '10') // Optiikka, avoin → 100
 
-    await page.goto('/#/tulokset/RA1')
+    await siirry(page, '/#/tulokset/RA1')
 
     // Vakioluokka: Hänninen ensin, Ahonen toisena. Avoimen luokan ampuja ei näy.
     const rivit = page.locator('tbody tr')
@@ -124,7 +124,7 @@ test.describe('sijoitukset', () => {
     await kirjaa(page, 0, '7') // Ahonen H50 → 70
     await kirjaa(page, 1, '9') // Hänninen H → 90
 
-    await page.goto('/#/tulokset/RA1')
+    await siirry(page, '/#/tulokset/RA1')
     // Kaikki: Ahonen on toinen.
     await expect(page.locator('tbody tr').nth(1)).toContainText('Ahonen')
 
@@ -147,7 +147,7 @@ test.describe('sijoitukset', () => {
     // Hänninen: 10 × napakymppi = 100 mutta kymmenen napaa.
     await kirjaa(page, 1, '★')
 
-    await page.goto('/#/tulokset/RA1')
+    await siirry(page, '/#/tulokset/RA1')
     const rivit = page.locator('tbody tr')
     await expect(rivit.nth(0)).toContainText('Hänninen')
     await expect(rivit.nth(0).locator('.napa')).toHaveText('10')
@@ -177,14 +177,14 @@ test.describe('yhdistyskilpailu', () => {
       [3, '7'],
       [4, '6'],
     ] as [number, string][]) {
-      await page.goto('/#/syota/RA1')
+      await siirry(page, '/#/syota/RA1')
       await page.locator('#kilpailijavalinta').selectOption(String(indeksi))
       await expect(page.locator('.laskuri')).toContainText(`${indeksi + 1} /`)
       await napautaMonta(page, arvo, 10)
       await expect(page.locator('#kilpailijavalinta')).toContainText('10/20')
     }
 
-    await page.goto('/#/yhdistykset')
+    await siirry(page, '/#/yhdistykset')
 
     // Yhteistuloksen kärjessä Nupures 270 pisteellä (100 + 90 + 80, ei neljättä).
     const karki = page.locator('tbody tr').first()
@@ -274,7 +274,7 @@ test.describe('perustoiminnot', () => {
     })
     await expect(page.getByText('1 kilpailijaa')).toBeVisible()
 
-    await page.goto('/#/kisatiedot')
+    await siirry(page, '/#/kisatiedot')
     await page.getByRole('button', { name: 'Aloita uusi kisa', exact: true }).click()
 
     // Ensimmäinen napautus vain kysyy; tietoja ei ole vielä poistettu.
@@ -283,7 +283,7 @@ test.describe('perustoiminnot', () => {
     await expect(page.getByText('Kisan tiedot poistettu')).toBeVisible()
 
     // Tiedot ovat oikeasti poissa, myös uudelleenlatauksen jälkeen.
-    await page.goto('/#/kilpailijat')
+    await siirry(page, '/#/kilpailijat')
     await expect(page.getByText('Ei vielä kilpailijoita')).toBeVisible()
     await page.reload()
     await expect(page.getByText('Ei vielä kilpailijoita')).toBeVisible()
