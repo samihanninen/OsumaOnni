@@ -298,6 +298,15 @@ Julkaisu tapahtuu automaattisesti, kun muutokset viedään `main`-haaraan.
 
 ## Kiitokset / Credits
 
+### 👤 Sovelluksen tekijä
+
+Tämän selainsovelluksen on suunnitellut ja toteuttanut **Sami Hänninen**
+([@samihanninen](https://github.com/samihanninen)), Nummi-Pusulan Reserviläiset ry.
+Sama tekijä on laatinut myös alkuperäisen Excel-tuloskortin, johon laskenta perustuu.
+
+*This browser application was designed and built by **Sami Hänninen**, who also authored
+the original Excel scorecard the calculations are based on.*
+
 ### 💡 sra-koe — Matti Pöllä
 
 Idea toteuttaa tuloslaskenta paikallisesti toimivana selainsovelluksena GitHub
@@ -344,12 +353,12 @@ kuin alkuperäisessä Excel-tuloskortissa, jonka pohjalta tämä on tehty.
 - ✔ **Muokata** — muuntaa, muokata ja rakentaa tämän pohjalle mihin tahansa tarkoitukseen
 
 **Ehdoilla:**
-- ▶ **Nimeä tekijä** — mainitse Nummi-Pusulan Reserviläiset ry alkuperäisenä tekijänä
+- ▶ **Nimeä tekijä** — mainitse Sami Hänninen / Nummi-Pusulan Reserviläiset ry alkuperäisenä tekijänä
 - ▶ **JaaSamoin** — jos muokkaat tai jaat tätä, käytä samaa CC BY-SA 4.0 -lisenssiä
 
 Lisenssin täydet ehdot suomeksi: https://creativecommons.org/licenses/by-sa/4.0/deed.fi
 
-© Nummi-Pusulan Reserviläiset ry
+© Sami Hänninen / Nummi-Pusulan Reserviläiset ry
 
 ---
 
