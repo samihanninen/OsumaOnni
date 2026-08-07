@@ -76,6 +76,50 @@ myös itse poistaa tietoja tilan säästämiseksi.
 automaattisesti: jos vientiä ei ole tehty lainkaan tai siitä on yli 30 minuuttia, sivun
 ylälaidassa näkyy huomautus.
 
+### Varmuuskopiointi laitteen ulkopuolelle
+
+Viety Excel-tiedosto on ainoa kopio tuloksista, ja jos se jää vain kirjaavan laitteen
+muistiin, laitteen rikkoutuminen, katoaminen tai varastaminen vie tulokset mukanaan.
+Jos haluat olla varma että tulokset ovat tallessa myös silloin, tee näin muutaman kerran
+kisan aikana:
+
+1. **Lataa tulokset Excel-tiedostona** *Vienti*-sivulta.
+2. **Varmista että tiedosto on todella siirtynyt laitteen ulkopuolelle** — että puhelimen
+   pilvivarmuuskopiointi (iCloud, Google Drive, OneDrive) on ehtinyt kopioida sen, tai
+   lähetä tiedosto itsellesi sähköpostilla tai viestillä.
+3. **Tarkista se toiselta laitteelta.** Vasta kun tiedosto aukeaa muualta kuin
+   kirjaavasta puhelimesta, se on oikeasti varmuuskopio.
+
+⚠️ Puhelimen *Lataukset*-kansiossa oleva tiedosto **ei ole varmuuskopio** — se katoaa
+laitteen mukana. Pilvipalvelun synkronointi voi myös viivästyä tai olla pois päältä
+ampumaradalla, jossa verkkoyhteys on heikko; siksi siirtyminen kannattaa tarkistaa
+eikä olettaa. Jos verkkoa ei ole lainkaan, siirrä tiedosto toiselle laitteelle
+AirDropilla tai Nearby Sharella — tai lähetä koko kisa QR-koodina, jolloin tulokset ovat
+kahdella laitteella — ja lataa tiedosto pilveen heti kun verkko löytyy.
+
+ℹ️ Huomaa että pilveen viety tiedosto sisältää kilpailijoiden nimet ja yhdistykset eli
+henkilötietoja. Se on tietoinen poikkeus sovelluksen periaatteeseen, jonka mukaan tiedot
+eivät poistu laitteelta: valitset tulosten säilymisen tietojen paikallisuuden sijaan.
+Poista tiedosto pilvestä, kun tuloksia ei enää tarvita.
+
+*The exported Excel file is the only copy of the results. If it never leaves the device
+that recorded them, a broken, lost or stolen phone takes the results with it. If you want
+to be certain the results are safe regardless, do this a few times during the competition:
+**(1)** download the results as an Excel file from the Vienti (Export) page; **(2)** make
+sure the file has actually left the device — that the phone's cloud backup (iCloud, Google
+Drive, OneDrive) has had time to copy it, or send it to yourself by email or message;
+**(3)** verify it from another device — a file is only really a backup once it opens
+somewhere other than the recording phone. A file sitting in the phone's Downloads folder
+is **not** a backup; it disappears with the device. Cloud sync may also be delayed or
+switched off at a shooting range with poor connectivity, so check that it transferred
+rather than assuming it did. With no network at all, move the file to another device via
+AirDrop or Nearby Share — or send the whole competition as a QR code, which puts the
+results on two devices — and upload the file to the cloud once you have a connection. Note
+that a file uploaded to the cloud contains competitors' names and clubs, i.e. personal
+data; this is a deliberate exception to the app's local-only principle — you are choosing
+durability over locality. Delete the file from the cloud once the results are no longer
+needed.*
+
 ### Kisan päättäminen ja tietojen poistaminen
 
 Kun kisa on ohi, tiedot poistetaan **Kisatiedot**-sivun alaosasta. Vaihtoehtoja on kaksi:
@@ -87,7 +131,8 @@ Kun kisa on ohi, tiedot poistetaan **Kisatiedot**-sivun alaosasta. Vaihtoehtoja 
 
 Molemmat vaativat erillisen vahvistuksen, ja sovellus kertoo ennen poistoa, onko
 tuloksia viety tiedostoon. Poistoa ei voi peruuttaa, joten **vie tulokset ensin** — viety
-Excel-tiedosto on tämän jälkeen ainoa kopio.
+Excel-tiedosto on tämän jälkeen ainoa kopio. Varmista ennen poistoa myös, että tiedosto
+on siirtynyt laitteen ulkopuolelle (ks. *Varmuuskopiointi laitteen ulkopuolelle* yllä).
 
 Kilpailijoiden nimet ja yhdistykset ovat henkilötietoja, joten niitä ei kannata jättää
 laitteelle kisan jälkeen pidemmäksi aikaa kuin on tarpeen.
