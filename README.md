@@ -5,6 +5,11 @@ Kaikki tiedot pysyvät **vain omalla laitteellasi** — sovelluksessa ei ole tau
 
 **➡️ Sovellus: https://samihanninen.github.io/osumaonni/**
 
+**📖 Kilpailupäivän ohje: [KILPAILUOHJE.md](KILPAILUOHJE.md)** — lyhyt muistilista siitä
+mitä radalla tehdään. Sama ohje löytyy sovelluksen sisältä *Ohje*-välilehdeltä, jolloin
+se on luettavissa myös ilman verkkoyhteyttä. Tämä README on tausta-aineistoa; kisapäivänä
+riittää tuo yksi sivu.
+
 Osoite on kokonaan pienellä. GitHub Pages tarjoilee polun kirjainkoolle tarkasti,
 joten `/OsumaOnni/` ei toimi — pelkkä pieni kirjoitusasu on helpompi sanella radalla.
 
@@ -44,6 +49,8 @@ käytettävissä puhelimella ampumaradalla. Tämä versio korjaa nämä kolme as
 - **Mobiilikäyttö** — puhelimella iso näppäimistö, tietokoneella Excelin tapainen taulukko
 - **Monta kirjaajaa** — useampi henkilö voi kirjata tuloksia omalla laitteellaan ja tulokset yhdistetään yhdelle laitteelle
 - **Offline** — asennettavissa kotivalikkoon ja toimii ilman verkkoyhteyttä
+- **Kilpailupäivän ohje sovelluksen sisällä** — kisapäivän muistilista luettavissa myös
+  radalla, jossa verkkoyhteyttä ei ole
 - **Vienti ja tuonti Excel-tiedostona** — tulokset saa ulos ja takaisin sisään
 
 ---
@@ -59,6 +66,9 @@ käytettävissä puhelimella ampumaradalla. Tämä versio korjaa nämä kolme as
 4. **Sijoitukset** — henkilökohtaiset tulokset järjestyksessä, tasatulokset napojen mukaan.
 5. **Yhdistykset** — yhdistyskilpailun tilanne lajeittain ja yhteistuloksena.
 6. **Vienti** — lataa tai jaa tulokset Excel-tiedostona. **Tee tämä kisan aikana säännöllisesti.**
+
+Kisapäivää varten on erillinen tiivis muistilista: [KILPAILUOHJE.md](KILPAILUOHJE.md).
+Se on luettavissa myös sovelluksen *Ohje*-välilehdeltä ilman verkkoyhteyttä.
 
 ---
 
@@ -145,8 +155,26 @@ Sovellus kannattaa asentaa kotivalikkoon (*Lisää Koti-valikkoon* / *Asenna sov
 - selain karsii tallennettuja tietoja epätodennäköisemmin kuin tavallisessa välilehdessä
 - sovellus avautuu omana ikkunanaan ilman selaimen osoitepalkkia
 
-Päivitykset eivät asennu itsestään kesken kisan: uudesta versiosta tulee ilmoitus, ja
-päivityksen ajankohdan valitset itse. Kirjatut tulokset säilyvät päivityksessä.
+### Päivittäminen — älä kesken kisan
+
+Päivitykset eivät asennu itsestään: uudesta versiosta tulee ilmoitus, ja päivityksen
+ajankohdan valitset itse. Kirjatut tulokset säilyvät päivityksessä.
+
+⚠️ **Jos ilmoitus "Uusi versio saatavilla" ilmestyy kesken kilpailun, paina
+"Myöhemmin".** Päivitä vasta kun kisa on ohi ja tulokset on viety tiedostoon.
+
+Syy on yksinkertainen: uutta versiota ei ole koeteltu juuri sinun kisassasi, ja radalla
+ei yleensä ole yhteyttä eikä aikaa selvittää yllätyksiä. Sovellus toimii moitteetta myös
+päivittämättä, joten *Myöhemmin* ei maksa mitään. Ilmoitus tulee uudelleen seuraavalla
+avauskerralla.
+
+Jos päivitys osoittautuu virheelliseksi, se perutaan keskitetysti julkaisemalla edellinen
+versio uudelleen — yksittäinen käyttäjä ei voi palata vanhaan versioon itse, koska
+verkkosivusta on aina vain yksi julkaistu versio kerrallaan.
+
+**Kaikissa kisan laitteissa on syytä olla sama versio.** Tulosten yhdistäminen QR-koodilla
+tarkistaa siirtomuodon version, ja eri versiot voivat kieltäytyä lukemasta toistensa
+koodeja. Päivittäkää siis kaikki laitteet yhdessä — ennen kisaa, ei kesken sen.
 
 > **Jos asensit sovelluksen ennen osoitteen muuttumista pieniksi kirjaimiksi:** poista vanha
 > kuvake kotivalikosta ja asenna sovellus uudelleen yllä olevasta osoitteesta. Vanha
