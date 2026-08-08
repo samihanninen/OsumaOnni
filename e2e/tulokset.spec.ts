@@ -227,6 +227,7 @@ test.describe('löydettävyys', () => {
       ['Yhdistä', 'Yhdistä tulokset'],
       ['Vienti', 'Vienti ja tuonti'],
       ['Kisatiedot', 'Kisatiedot'],
+      ['Ohje', 'Kilpailupäivän ohje'],
     ] as [string, string][]) {
       await page.locator('.valikko a', { hasText: new RegExp(`^${linkki}$`) }).click()
       await expect(page.getByRole('heading', { name: otsikko, level: 1 })).toBeVisible()
