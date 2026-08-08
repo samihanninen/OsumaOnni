@@ -4,6 +4,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import KisatiedotView from '../KisatiedotView.vue'
 import KilpailijatView from '../KilpailijatView.vue'
 import EtusivuView from '../EtusivuView.vue'
+import OhjeView from '../OhjeView.vue'
 import { useKisaStore } from '@/stores/kisa'
 
 /**
@@ -23,6 +24,21 @@ describe('näkymien renderöinti', () => {
   it('etusivu renderöityy ja kertoo paikallisesta tallennuksesta', () => {
     const wrapper = mount(EtusivuView, { global: globaalit })
     expect(wrapper.text()).toContain('Tiedot tallentuvat vain tähän laitteeseen')
+  })
+
+  /*
+   * Ohje on käännösaikana mukaan luettu tiedosto. Testi varmistaa, että se todella
+   * päätyy nippuun: ilman sitä näkymä olisi tyhjä vasta radalla, ilman verkkoyhteyttä.
+   */
+  it('ohjenäkymä renderöi kisapäivän muistilistan', () => {
+    const wrapper = mount(OhjeView, { global: globaalit })
+    expect(wrapper.text()).toContain('Kilpailupäivän ohje')
+    expect(wrapper.text()).toContain('Myöhemmin')
+    // Markdown on jäsennetty rakenteeksi, ei jätetty raa'aksi tekstiksi.
+    expect(wrapper.findAll('ol').length).toBeGreaterThan(0)
+    expect(wrapper.findAll('strong').length).toBeGreaterThan(0)
+    expect(wrapper.findAll('.huomio--varoitus').length).toBeGreaterThan(0)
+    expect(wrapper.text()).not.toContain('**')
   })
 
   it('kisatiedot renderöityy ja näyttää lajien rakenteen', () => {

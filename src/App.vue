@@ -29,6 +29,7 @@ const laji = computed(() => laite.viimeinenLaji || 'RA1')
       <RouterLink to="/yhdista">Yhdistä</RouterLink>
       <RouterLink to="/vienti">Vienti</RouterLink>
       <RouterLink to="/kisatiedot">Kisatiedot</RouterLink>
+      <RouterLink to="/ohje">Ohje</RouterLink>
     </nav>
   </header>
 

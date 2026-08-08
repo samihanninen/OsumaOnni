@@ -61,6 +61,12 @@ const osiot = computed(() => [
     otsikko: 'Kisatiedot',
     kuvaus: 'Kisan nimi, paikka, vastuuhenkilöt ja kisan päättäminen.',
   },
+  {
+    polku: '/ohje',
+    merkki: '📖',
+    otsikko: 'Kilpailupäivän ohje',
+    kuvaus: 'Lyhyt muistilista kisapäivälle. Luettavissa myös ilman verkkoyhteyttä.',
+  },
 ])
 </script>
 

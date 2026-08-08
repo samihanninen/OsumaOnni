@@ -57,6 +57,12 @@ const router = createRouter({
       meta: { otsikko: 'Vienti ja tuonti' },
     },
     {
+      path: '/ohje',
+      name: 'ohje',
+      component: () => import('@/views/OhjeView.vue'),
+      meta: { otsikko: 'Kilpailupäivän ohje' },
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'ei-loytynyt',
       component: () => import('@/views/EiLoytynytView.vue'),
